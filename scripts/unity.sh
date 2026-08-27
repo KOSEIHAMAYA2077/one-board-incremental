@@ -48,6 +48,14 @@ generate_scene() {
     -executeMethod IncrementalGame.Editor.Prototype0SceneBuilder.GenerateScene
 }
 
+ensure_scene() {
+  if [[ -f "${PROJECT_DIRECTORY}/Assets/_Project/Scenes/Prototype0.unity" ]]; then
+    compile_project
+  else
+    generate_scene
+  fi
+}
+
 compile_project() {
   run_unity compile -quit
 }
@@ -168,7 +176,7 @@ main() {
     build-windows) build_windows ;;
     package-windows) package_windows ;;
     verify)
-      generate_scene
+      ensure_scene
       test_edit_mode
       test_play_mode
       build_windows

@@ -23,7 +23,7 @@ Windows PowerShell：
 .\scripts\unity.ps1 verify
 ```
 
-Scene生成，EditMode Test，PlayMode Test，Windows x64 Buildを順番に行い，結果を`Artifacts/`へ出す．詳しくは`docs/DEVELOPMENT_WORKFLOW.md`を参照する．
+Scene存在確認とCompile，EditMode Test，PlayMode Test，Windows x64 Buildを順番に行い，結果を`Artifacts/`へ出す．Sceneがない場合だけUnity自身が生成する．詳しくは`docs/DEVELOPMENT_WORKFLOW.md`を参照する．
 
 ## AIへ渡すファイル
 

@@ -39,7 +39,7 @@ Windows PowerShell：
 順番は固定である．
 
 ```text
-Scene生成
+Scene存在確認とCompile．Sceneがなければ生成
 → EditMode Test
 → PlayMode Test
 → Windows x64 Build
@@ -52,7 +52,7 @@ Scene生成
 
 ## 4．SceneとPrefab
 
-Prototype 0 Sceneは`Incremental Game/Generate Prototype 0 Scene`またはHarnessからUnity自身に生成させる．Scene YAMLを手書きしない．Scene生成Code，Core Test，Presentation Testを同じ変更へ含める．
+Prototype 0 Sceneは`Incremental Game/Generate Prototype 0 Scene`またはHarnessの`generate`からUnity自身に生成させる．Scene YAMLを手書きしない．通常の`verify`は既存Sceneを再生成せず，存在確認とCompileを行う．Sceneがない場合だけ生成する．Scene生成Codeを変更した場合は`generate`を明示実行し，生成差分を確認する．Scene生成Code，Core Test，Presentation Testを同じ変更へ含める．
 
 ## 5．Git手順
 

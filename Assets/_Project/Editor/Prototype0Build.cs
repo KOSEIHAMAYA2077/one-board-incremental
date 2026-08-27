@@ -27,7 +27,11 @@ namespace IncrementalGame.Editor
 
         private static void Build(BuildTarget target, string outputPath)
         {
-            Prototype0SceneBuilder.GenerateScene();
+            if (!File.Exists(Prototype0SceneBuilder.ScenePath))
+            {
+                Prototype0SceneBuilder.GenerateScene();
+            }
+
             WriteBuildMetadata();
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath) ?? "Builds");
 

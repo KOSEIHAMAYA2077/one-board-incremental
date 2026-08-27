@@ -38,4 +38,4 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 標準Command
 
-macOSでは`./scripts/unity.sh verify`，Windowsでは`.\scripts\unity.ps1 verify`をRelease候補の最終検証に使う．このCommandはScene生成，EditMode，PlayMode，Windows x64 Build，ZIPとSHA-256生成を順番に実行する．結果は`Artifacts/`に出し，Commitしない．
+macOSでは`./scripts/unity.sh verify`，Windowsでは`.\scripts\unity.ps1 verify`をRelease候補の最終検証に使う．このCommandはScene存在確認とCompile，EditMode，PlayMode，Windows x64 Build，ZIPとSHA-256生成を順番に実行する．Sceneがない場合だけUnity自身が生成する．結果は`Artifacts/`に出し，Commitしない．Scene生成Codeを変更した場合は`generate`を明示実行し，生成差分を確認する．

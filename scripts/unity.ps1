@@ -47,6 +47,15 @@ function New-PrototypeScene {
     Invoke-Unity "generate-scene" "-quit" "-executeMethod" "IncrementalGame.Editor.Prototype0SceneBuilder.GenerateScene"
 }
 
+function Confirm-PrototypeScene {
+    $ScenePath = Join-Path $ProjectDirectory "Assets\_Project\Scenes\Prototype0.unity"
+    if (Test-Path -LiteralPath $ScenePath -PathType Leaf) {
+        Invoke-Unity "compile" "-quit"
+    } else {
+        New-PrototypeScene
+    }
+}
+
 function Test-EditMode {
     Invoke-Unity "editmode" "-runTests" "-testPlatform" "EditMode" "-testResults" (Join-Path $ResultDirectory "editmode.xml")
 }
@@ -136,7 +145,7 @@ switch ($Command) {
     "build-windows" { Build-Windows }
     "package-windows" { New-WindowsPackage }
     "verify" {
-        New-PrototypeScene
+        Confirm-PrototypeScene
         Test-EditMode
         Test-PlayMode
         Build-Windows
