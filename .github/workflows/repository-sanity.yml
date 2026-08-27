@@ -1,0 +1,30 @@
+name: Repository sanity
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm pinned Unity version
+        run: |
+          grep -F "m_EditorVersion: 6000.3.18f1" ProjectSettings/ProjectVersion.txt
+          grep -F "m_EditorVersionWithRevision: 6000.3.18f1 (5ebeb53e4c07)" ProjectSettings/ProjectVersion.txt
+      - name: Reject generated Unity directories
+        run: |
+          if git ls-files | grep -E '(^|/)(Library|Temp|Logs|Artifacts|Builds?)/'; then
+            echo "Generated Unity output is tracked."
+            exit 1
+          fi
+      - name: Confirm canonical specifications
+        run: |
+          test -f docs/MASTER_GAME_SPECIFICATION_2026-08-28.md
+          test -f docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md
+          grep -F "文書Version：0.3.0" docs/MASTER_GAME_SPECIFICATION_2026-08-28.md
+          grep -F "0.1.0-prototype0" docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md

@@ -1,0 +1,22 @@
+{
+  "name": "IncrementalGame.PlayModeTests",
+  "rootNamespace": "IncrementalGame.Tests.PlayMode",
+  "references": [
+    "IncrementalGame.Core",
+    "IncrementalGame.Presentation"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

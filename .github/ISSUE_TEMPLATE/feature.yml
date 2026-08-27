@@ -1,0 +1,34 @@
+name: Prototype feature
+description: 仕様に基づく一機能の実装
+title: "[P0] "
+labels: ["prototype"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: 目的
+      description: Playerに何が可能になるかを書く．
+    validations:
+      required: true
+  - type: input
+    id: specification
+    attributes:
+      label: 仕様参照
+      description: Master章，Prototype Brief章，不変条件IDを書く．
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受入条件
+      description: 観測可能な完了条件を書く．
+    validations:
+      required: true
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: 必須検証
+      options:
+        - label: EditMode Testを追加または確認する
+        - label: Presentation変更時はPlayMode Testを追加または確認する
+        - label: Release候補ではWindows x64 Buildを確認する
