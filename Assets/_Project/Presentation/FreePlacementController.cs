@@ -312,7 +312,8 @@ namespace IncrementalGame.Presentation
                     Label((float)p.X - 110, (float)(p.Y + view.Piece.Size.Y / 2 + 14), 240, 32,
                         view.Piece.Kind == BoardPieceKind.Mirror ? $"Mirror  {view.Piece.Angle:0}°" : NameOf(view.Piece.Id), _small);
             }
-            Panel(new Rect(0, 780, 1600, 120), new Color(0.04f, 0.065f, 0.09f));
+            Panel(new Rect(0, 780, 730, 120), new Color(0.04f, 0.065f, 0.09f));
+            Panel(new Rect(890, 780, 710, 120), new Color(0.04f, 0.065f, 0.09f));
             Label(28, 802, 690, 50, _message, _body);
             Label(940, 800, 620, 30, Editing ? "位置は20px刻み。重なり・盤面外は禁止。" : "紫 → 緑で +4。反射も組み合わせると +6。", _small);
             Label(940, 838, 610, 40, $"{GameVersion}  /  {BuildMetadata.CommitHash}\nSeed 20260828", _small);
