@@ -122,6 +122,43 @@ namespace IncrementalGame.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Prototype0LayoutSupportsReflectedCollectorHit()
+        {
+            var collectorPosition = LogicalSpace.ToWorld(new SimVector2(800.0, 225.0));
+            _collectorObject.transform.position = collectorPosition;
+            _collectorObject.transform.localScale = new Vector3(1.35f, 0.72f, 1f);
+            _collectorObject.GetComponent<BoxCollider2D>().size = Vector2.one;
+
+            var wallPosition = LogicalSpace.ToWorld(new SimVector2(460.0, 580.0));
+            var wall = CreateWall(wallPosition, Vector2.one, 5f);
+            wall.transform.localScale = new Vector3(0.18f, 2.65f, 1f);
+
+            var wallNormal = (Vector2)(Quaternion.Euler(0f, 0f, 5f) * Vector2.right);
+            var virtualCollector = collectorPosition -
+                2f * Vector2.Dot(collectorPosition - wallPosition, wallNormal) * wallNormal;
+            var aimDirection = (virtualCollector - (Vector2)_gun.position).normalized;
+            var projectileId = _controller.SpawnProjectileForTest(
+                LogicalSpace.ToLogical(_gun.position),
+                LogicalSpace.DirectionToLogical(aimDirection) * 900.0,
+                1);
+            Physics2D.SyncTransforms();
+
+            var sawReflection = false;
+            for (var tick = 0; tick < 120 && _controller.ActiveProjectileCount > 0; tick += 1)
+            {
+                _controller.SimulateTick(1.0 / 60.0);
+                var state = _controller.GetProjectileStateForTest(projectileId);
+                sawReflection |= state != null && state.HasReflected;
+            }
+
+            Assert.That(sawReflection, Is.True, "The route must visibly bend at the scene wall.");
+            Assert.That(_controller.Economy.HitCount, Is.EqualTo(1));
+            Assert.That(_controller.Economy.Gold, Is.EqualTo(1.0));
+            Object.Destroy(wall);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator CornerContactReturnsWithoutInfiniteRecollision()
         {
             _collectorObject.transform.position = new Vector3(5f, 4f, 0f);

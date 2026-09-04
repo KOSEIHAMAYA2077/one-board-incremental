@@ -146,7 +146,7 @@ namespace IncrementalGame.Presentation
 
             GUI.Label(new Rect(20f, Screen.height - 72f, 900f, 52f),
                 $"v{Application.version}  commit {BuildMetadata.CommitHash}  seed {SessionSeed}\n" +
-                $"Left click: fire   Aim at the cyan wall for reflected reward   Last: {_lastEvent}",
+                $"Left click: fire   Aim near the cyan wall center; watch the trail bend   Last: {_lastEvent}",
                 _labelStyle);
 
             if (!_upgradePanelOpen)
@@ -292,6 +292,15 @@ namespace IncrementalGame.Presentation
             var viewObject = new GameObject($"Projectile {_nextProjectileId}");
             var shape = viewObject.AddComponent<PrototypeShapeView>();
             shape.Configure(new Color(1f, 0.78f, 0.18f), Vector2.one * 0.16f);
+            var trail = viewObject.AddComponent<TrailRenderer>();
+            trail.time = 0.32f;
+            trail.minVertexDistance = 0.03f;
+            trail.startWidth = 0.11f;
+            trail.endWidth = 0.015f;
+            trail.startColor = new Color(1f, 0.78f, 0.18f, 0.95f);
+            trail.endColor = new Color(1f, 0.78f, 0.18f, 0f);
+            trail.material = new Material(Shader.Find("Sprites/Default"));
+            trail.sortingOrder = 2;
             viewObject.transform.position = LogicalSpace.ToWorld(position);
             var runtime = new ProjectileRuntime(state, viewObject);
             _projectiles.Add(runtime);
@@ -316,6 +325,12 @@ namespace IncrementalGame.Presentation
                 {
                     _reflectionCount += result.ReflectionCount;
                     _lastEvent = "WALL REFLECTION";
+                    var trail = projectile.View.GetComponent<TrailRenderer>();
+                    if (trail != null)
+                    {
+                        trail.startColor = new Color(0.2f, 0.9f, 1f, 1f);
+                        trail.endColor = new Color(0.2f, 0.9f, 1f, 0f);
+                    }
                     WriteLog($"reflect projectile={projectile.State.Id} count={result.ReflectionCount}");
                 }
 
@@ -338,13 +353,32 @@ namespace IncrementalGame.Presentation
 
                 if (!projectile.State.Alive)
                 {
-                    Destroy(projectile.View);
+                    PreserveTrailAndDestroyView(projectile.View);
                     _projectiles.RemoveAt(index);
                     continue;
                 }
 
                 projectile.View.transform.position = LogicalSpace.ToWorld(projectile.State.Position);
             }
+        }
+
+        private static void PreserveTrailAndDestroyView(GameObject view)
+        {
+            var trail = view.GetComponent<TrailRenderer>();
+            if (trail == null)
+            {
+                Destroy(view);
+                return;
+            }
+
+            trail.emitting = false;
+            var spriteRenderer = view.GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.enabled = false;
+            }
+
+            Destroy(view, trail.time);
         }
 
         private void ResolveCollectorContact(ProjectileState state)

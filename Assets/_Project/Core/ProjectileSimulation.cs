@@ -97,10 +97,10 @@ namespace IncrementalGame.Core
                     }
 
                     reflectionCount += 1;
-                    var reflectedDirection = state.Velocity.Normalized;
-                    var separation = state.Radius + SeparationEpsilon;
-                    state.Position = hit.Point + reflectedDirection * separation;
-                    remainingDistance = Math.Max(0.0, remainingDistance - separation);
+                    state.Position = hit.Point + hit.Normal * (state.Radius + SeparationEpsilon);
+                    remainingDistance = Math.Max(
+                        0.0,
+                        remainingDistance - ContactEpsilon - SeparationEpsilon);
                     continue;
                 }
 
