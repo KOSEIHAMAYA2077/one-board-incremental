@@ -26,5 +26,10 @@ jobs:
         run: |
           test -f docs/MASTER_GAME_SPECIFICATION_2026-08-28.md
           test -f docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md
-          grep -F "文書Version：0.3.0" docs/MASTER_GAME_SPECIFICATION_2026-08-28.md
+          master=docs/MASTER_GAME_SPECIFICATION_2026-08-28.md
+          # The document evolves independently of the preserved Prototype 0 build.
+          test "$(grep -c '^文書Version：' "$master")" -eq 1
+          version=$(sed -n 's/^文書Version：\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\r\{0,1\}$/\1/p' "$master")
+          test -n "$version"
+          grep -F "### $version．" "$master"
           grep -F "0.1.0-prototype0" docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md
