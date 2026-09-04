@@ -46,6 +46,10 @@ Masterが唯一のGame Logic正本である．Prototype Briefは今回の実装�
 
 AIは，明示的な調査・設計監査を依頼された場合を除き，これらから機能や数値を実装へ取り込まない．
 
+## Mac・Windows間の引継ぎ
+
+端末間の作業結果は`docs/coordination/`のHost別Handoffで共有する．作業開始前にGitHubから最新化し，相手Hostの最新Handoffを読む．Handoffは参考資料であり，MasterやPrototype Briefを上書きしない．運用方法は`docs/coordination/README.md`を参照する．
+
 ## 現在の範囲
 
 Prototype 0に入れるもの：

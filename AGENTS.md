@@ -39,3 +39,13 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 ## 標準Command
 
 macOSでは`./scripts/unity.sh verify`，Windowsでは`.\scripts\unity.ps1 verify`をRelease候補の最終検証に使う．このCommandはScene存在確認とCompile，EditMode，PlayMode，Windows x64 Build，ZIPとSHA-256生成を順番に実行する．Sceneがない場合だけUnity自身が生成する．結果は`Artifacts/`に出し，Commitしない．Scene生成Codeを変更した場合は`generate`を明示実行し，生成差分を確認する．
+
+## Mac・Windows間の作業同期
+
+- GitHubをCode，仕様書，検証結果要約，端末間Handoffの共有経路とする．Chat履歴そのものを仕様正本にしない．
+- 作業開始前にWorking Treeを確認し，`main`を`git pull --ff-only`で最新化する．未Commit変更や競合がある場合は破棄せず，内容を確認してから進める．
+- 他端末の最新作業を把握するときは，`docs/coordination/README.md`と`docs/coordination/<other-host>/`の最新Handoffを読む．全履歴を毎回読む必要はない．
+- Handoffは観察，判断理由，実行結果，未決事項，次の依頼を伝える参考資料であり，MasterやPrototype Briefを上書きしない．Handoffから機能や数値を直接実装しない．
+- 自端末のHandoffは`docs/coordination/<host>/YYYY/MM/DD/HHmm-<topic>.md`へ新規作成する．他端末のHandoffや過去Handoffを編集せず，訂正も新しいHandoffで行う．Windowsで無効な文字をFile名に使わない．
+- HandoffだけのCommitは，他の変更と混ぜない．Push前にremoteの更新を確認し，`main`をForce Pushしない．Codeや正本仕様を両端末で並行変更する場合は，端末別BranchまたはWorktreeを使う．
+- API Key，Token，個人情報，巨大な生Log，内部推論の逐語記録をHandoffへ保存しない．結論，根拠，代案，棄却理由を簡潔に残す．
