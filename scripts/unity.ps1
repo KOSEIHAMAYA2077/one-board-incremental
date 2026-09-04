@@ -37,9 +37,11 @@ function Invoke-Unity {
         "-logFile", (Join-Path $LogDirectory "$LogName.log")
     )
 
-    & $UnityExecutable @BaseArguments @UnityArguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "Unity command failed with exit code $LASTEXITCODE. See $LogDirectory\$LogName.log"
+    $ProcessArguments = @($BaseArguments + $UnityArguments) |
+        ForEach-Object { '"' + $_.Replace('"', '\"') + '"' }
+    $UnityProcess = Start-Process -FilePath $UnityExecutable -ArgumentList $ProcessArguments -Wait -PassThru
+    if ($UnityProcess.ExitCode -ne 0) {
+        throw "Unity command failed with exit code $($UnityProcess.ExitCode). See $LogDirectory\$LogName.log"
     }
 }
 
