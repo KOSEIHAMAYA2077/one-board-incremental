@@ -16,6 +16,7 @@ namespace IncrementalGame.Presentation
         private readonly List<BoardPiece> _pieces = new List<BoardPiece>();
         private readonly BoardRoutingQuery _query = new BoardRoutingQuery();
         private readonly ReloadState _reload = new ReloadState(0.65);
+        private SimVector2 _lastAimDirection = new SimVector2(0, -1);
         private DeterministicRandom _random = new DeterministicRandom(20260828);
         private Camera _camera;
         private PrototypeAudio _audio;
@@ -191,7 +192,7 @@ namespace IncrementalGame.Presentation
         {
             if (Editing || !_hasFocus || Time.frameCount <= _blockedUntilFrame || !_reload.TryFire()) return false;
             var delta = aim - FreePlacementBoard.Gun;
-            var direction = delta.Magnitude < 100 ? new SimVector2(0, -1) : delta.Normalized;
+            var direction = ResolveAim(delta);
             var offset = _random.NextSignedOffset(AimCalculator.GetSpreadDegrees(delta.Magnitude));
             var shot = new RoutingShot(FreePlacementBoard.Gun, AimCalculator.RotateDegrees(direction, offset) * 900);
             shot.Trace.Add(shot.Position);
@@ -253,7 +254,7 @@ namespace IncrementalGame.Presentation
             }
             if (!show) return;
             var delta = aim - FreePlacementBoard.Gun;
-            var direction = delta.Magnitude < 100 ? new SimVector2(0, -1) : delta.Normalized;
+            var direction = ResolveAim(delta);
             if (Editing)
             {
                 if (_selected != null && _selected.Piece.Kind == BoardPieceKind.Mirror) direction = (_selected.Piece.Position - FreePlacementBoard.Gun).Normalized;
@@ -273,6 +274,12 @@ namespace IncrementalGame.Presentation
         }
 
         private string NameOf(int id) { var piece = _pieces.Find(p => p.Id == id); return piece == null ? "?" : piece.Kind == BoardPieceKind.Collector ? "Collector " + id : piece.Kind.ToString(); }
+
+        private SimVector2 ResolveAim(SimVector2 delta)
+        {
+            if (delta.Magnitude >= 100) _lastAimDirection = delta.Normalized;
+            return _lastAimDirection;
+        }
 
         private void OnGUI()
         {
@@ -405,9 +412,25 @@ namespace IncrementalGame.Presentation
             var invalidMove = TryMovePiece(3, new SimVector2(800, 220), 0);
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(Path.Combine(folder, "03-edit.png"));
+            CaptureBoard(Path.Combine(folder, "04-board-offscreen.png"));
             yield return new WaitForSecondsRealtime(0.3f);
             File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"gold={Gold}; validMove={validMove}; invalidMoveRejected={!invalidMove}; editing={Editing}");
             Application.Quit(Gold == 4 && validMove && !invalidMove ? 0 : 1);
+        }
+
+        private void CaptureBoard(string path)
+        {
+            var target = RenderTexture.GetTemporary(1600, 900, 24);
+            var previous = RenderTexture.active;
+            var previousTarget = _camera.targetTexture;
+            var pixels = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+            try
+            {
+                _camera.targetTexture = target; _camera.Render(); RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); pixels.Apply();
+                File.WriteAllBytes(path, pixels.EncodeToPNG());
+            }
+            finally { _camera.targetTexture = previousTarget; RenderTexture.active = previous; RenderTexture.ReleaseTemporary(target); Destroy(pixels); }
         }
         private sealed class Flight { public RoutingShot Shot; public LineRenderer Path; public SpriteRenderer Head; }
         private sealed class FadingPath { public LineRenderer Line; public float Remaining; }
