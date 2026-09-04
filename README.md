@@ -1,5 +1,13 @@
 # One Board Incremental
 
+## 最新の試作：ROUTE LAB / Prototype 1A
+
+自由配置，Mirror回転，Collector二個とAmplifierを試せるWindows版．`B`で配置編集，ドラッグで移動，Mirror選択後`Q / E`またはホイールで回転，再び`B`で再開し左クリックで発射する．配置は自動保存され，日時付き履歴も残る．
+
+Unity Scene：`Assets/_Project/Scenes/FreePlacement.unity`．検証・Build：`.\scripts\placement.ps1 verify`．成果物は`Artifacts/Placement/<実行日時>/`へ毎回新規保存する．今回の範囲は`docs/AI_PROTOTYPE1A_IMPLEMENTATION_BRIEF_2026-09-05.md`を参照．
+
+旧Prototype 0のScene，Build手順，過去成果物は引き続き保持する．以下はPrototype 0の説明．
+
 一つの盤面へTargetを配置し，五発Recipeと一発ごとの照準で収益経路を作り，奥のCoreを破壊する短編能動型インクリメンタルゲームである．現在はPrototype 0として，射撃感と最初の10 Hit→10 Gold→`Collector Value＋1`だけを検証している．
 
 ## 固定環境

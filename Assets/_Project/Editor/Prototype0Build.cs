@@ -55,7 +55,7 @@ namespace IncrementalGame.Editor
                 $"[Prototype0] Build succeeded: {outputPath} ({report.summary.totalSize} bytes)");
         }
 
-        private static void WriteBuildMetadata()
+        public static void WriteBuildMetadata()
         {
             const string resourcesDirectory = "Assets/Resources";
             const string assetPath = resourcesDirectory + "/build-info.txt";

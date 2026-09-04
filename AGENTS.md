@@ -14,6 +14,8 @@
 
 Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけを併読する．調査や設計監査を明示的に依頼されていない限り，履歴文書を仕様入力にしない．
 
+現在の追加実装はPrototype 1Aであり，`docs/AI_PROTOTYPE1A_IMPLEMENTATION_BRIEF_2026-09-05.md`を併読する．旧Prototype 0のScene・Build・Briefは保持する．Prototype 1Aは`0.2.0-placement`，検証Commandは`.\scripts\placement.ps1 verify`．Userは多人数による面白さ検証より，AI駆動で動く試作を積み上げることを優先している．必要な動作Testは継続する．
+
 ## 実装規則
 
 - Prototype 0外の機能を先回りして実装しない．

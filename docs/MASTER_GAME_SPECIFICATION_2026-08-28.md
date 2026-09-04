@@ -1,7 +1,7 @@
 # 一盤面式能動型インクリメンタルゲーム Master仕様書
 
-文書Version：0.3.0  
-更新日：2026年8月28日  
+文書Version：0.4.0
+更新日：2026年9月5日
 対象Engine：Unity 6000.3.18f1  
 第一対象Platform：Windows 10／11 x64  
 最終配布先：Steam  
@@ -295,9 +295,20 @@ Playing中は次を進行させる．
 - Coreは開始時からSilhouetteとShield Ringを表示する．`FIXED`
 - 未解放時も長期目標であることをUIで示す．`FIXED`
 
-### 5.4．Socket方式
+### 5.4．自由配置方式
 
-Targetは固定候補Socketへ配置する．座標自由配置は行わない．`FIXED`
+2026-09-05のUser承認により，固定Socket方式を盤面内の自由配置へ変更する．`FIXED`
+
+- 配置編集はPauseし，ドラッグで移動する．20 logical pxのグリッド吸着を初期値とする．`INITIAL`
+- Mirrorは5度単位で回転でき，面法線と散布なしの参考反射経路を表示する．`INITIAL`
+- 装置同士の重なり，盤面外，銃とUI領域への配置は禁止する．円は円，回転した板は回転矩形の形状で判定する．`FIXED`
+- 禁止位置は赤く表示し，不正な位置で離した場合は移動前の位置・角度へ戻す．`FIXED`
+- 配置変更は無料である．配置編集開始時の既発射弾終了は§4.1に従う．`FIXED`
+- Prototype 1Aでは配置領域をX=300〜1560，Y=140〜750とする．当たり判定全体が領域内に収まる必要がある．`INITIAL`
+- Prototype 1AはCollector二個，Mirror一個，Amplifier一個を支給した実験開始状態とし，Collector Base Goldは2で開始する．購入済み初回Upgrade相当で，製品のNew Game値は変更しない．`INITIAL`
+- 配置の明示保存・編集終了・終了時にLocalへ保存する．上書き前提の現行配置とは別に日時付き配置履歴を保持する．`INITIAL`
+
+以下のSocket図と個数・価格参照は旧設計の候補である．本節の自由配置規則が優先し，Prototype 1AへSocket購入や固定位置制限を実装しない．製品の所有数・配置可能数・解禁価格は後続Prototypeで再整理する．
 
 ```text
 ┌──────────────────────────────────────────┐
@@ -1505,7 +1516,9 @@ Debug Buildだけ詳細Eventを保存し，公開Buildは集約Logへ切り替�
 
 ### 23.2．Prototype 1．盤面成長
 
-実装：5 Socket，Collector，Mirror，Material Node，Amplifier，Target購入，無料移動，四つのGold Upgrade，有限解禁．
+最初の実装はPrototype 1A「自由配置」とする．実装範囲は`AI_PROTOTYPE1A_IMPLEMENTATION_BRIEF_2026-09-05.md`で限定する．自由配置，Mirror回転，Collector二個，Mirror一個，Amplifier一個を使い，置き直してすぐ撃てる試作を作る．
+
+後続候補：Material Node，Target購入，Gold Upgrade，有限解禁．順序と採否はUserの試遊結果から決める．AI駆動で制作を進める現段階では，多人数Playtestを次の内部実装の必須条件としない．動作と当たり判定の自動Testは維持する．正式Release向けの評価条件とは区別する．
 
 成功候補：
 
@@ -1798,6 +1811,13 @@ Prototype 0の実装順は次とする．
 
 ## 30．変更履歴
 
+### 0.4.0．2026年9月5日
+
+- User承認により，固定Socketからグリッド吸着付き自由配置へ変更した．
+- Mirror回転，形状に一致する重なり判定，配置履歴の保存を定義した．
+- 次の試作をPrototype 1Aとして切り出し，旧Prototype 0のSceneとBuildを保持する．
+- 趣味制作・AI駆動制作の体験を優先し，多人数の面白さ検証を内部試作の進行条件としない方針を記録した．
+
 ### 0.3.0．2026年8月28日
 
 - 18作品の再調査とReference Modelに基づき，旧経済曲線を定量監査した．
@@ -1831,6 +1851,6 @@ Prototype 0の実装順は次とする．
 
 ## 31．現在の最終判断
 
-本作はPrototype 0へ進める．Prototype 0の実装範囲は`AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`で固定する．正式仕様として最も重要な未検証点は，Prototype 2において五発Recipeの順番がPlayerの照準と結果を実際に変えるかである．
+現在はPrototype 0の動作確認を経て，Prototype 1Aの自由配置実装へ進める．Prototype 0の実装範囲と復元用Sceneは維持する．正式仕様として最も重要な未検証点は，Prototype 2において五発Recipeの順番がPlayerの照準と結果を実際に変えるかである．
 
 Prototype 0から2が成立するまで，完成時間，Content数，Core HP，後半弾種を確定しない．Prototype 2が失敗した場合，既存仕様へ機能を足して救済せず，五発Recipeを主軸から外す再設計を行う．
