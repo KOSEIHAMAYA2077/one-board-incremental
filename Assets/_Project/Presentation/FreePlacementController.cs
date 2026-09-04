@@ -44,7 +44,8 @@ namespace IncrementalGame.Presentation
 
         private void Awake()
         {
-            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0) PersistenceEnabled = false;
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0)
+            { PersistenceEnabled = false; Application.runInBackground = true; }
             _camera = GetComponentInChildren<Camera>();
             if (_camera == null) _camera = Camera.main;
             _audio = GetComponent<PrototypeAudio>();
@@ -374,7 +375,12 @@ namespace IncrementalGame.Presentation
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
         }
-        private void OnApplicationFocus(bool focus) { _hasFocus = focus; if (!focus && _dragging) EndDrag(false); _blockedUntilFrame = Time.frameCount + 1; }
+        private void OnApplicationFocus(bool focus)
+        {
+            _hasFocus = focus || Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0;
+            if (!focus && _dragging) EndDrag(false);
+            _blockedUntilFrame = Time.frameCount + 1;
+        }
         private void OnApplicationQuit() { if (_dragging) EndDrag(false); SaveLayout(); Log($"end shots={_shots} hits={_hits} gold={_gold}"); }
 
         // Opt-in standalone diagnostic. Does not load or save the user's layout or session logs.
