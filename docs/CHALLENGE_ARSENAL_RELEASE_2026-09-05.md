@@ -2,7 +2,7 @@
 
 開発中のWindows試作。旧8版を保持し，mainにはまだ統合しない。
 
-公開状態：Windows Buildはローカル完成。GitHubへの新版ZIP添付は外部送信の安全確認で止まっており，追加許可待ち。Release作成成功とは扱わない。
+配布形態：非公開Repositoryの独立したPrerelease `v0.5.0-challenge`。Userが2026-09-05にコード・仕様・HandoffのPushとWindows ZIPの追加を明示承認した。旧Releaseとmainは変更しない。
 
 ## 遊び方
 
