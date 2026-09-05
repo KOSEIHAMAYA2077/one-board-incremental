@@ -18,6 +18,8 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
+最新試作は0.5.4-brake。Master §33.8／Momentum Briefに従い，Challengeの速度300以下を880/sで減速し，低速の弾・尾を収縮する。高速域120/s，再射撃条件，旧Lab，旧Build／Saveは保持。以下の表示Kitと旧版記述も復元用に残す。
+
 現在の表示試作は0.5.3-crystal／Lucent Kit V1。Master §33.7とMomentum Briefを参照。半透明Mesh・HP／Golden表示・浮遊回転と独立Galleryのみを追加し，Game Logicは維持。今後のHandoffはUserの指示・発想，Assistantの提案，採用／保留の判断を簡潔に記録する（Template参照）。
 
 最新試作はChallenge Arsenal 0.5.2-clear。Master §33（再射撃は§33.5，Clear案内は§33.6）とMomentum Briefの最新節を参照。3:4盤面・全残弾速度300以下で再射撃・10秒連鎖・2銃・容量20の効果・3Stageと恒久Goldを小さく実装。以下の旧版記述は復元用。旧Build／Tag／Saveを保持し，検証は`.\scripts\momentum.ps1 verify`。

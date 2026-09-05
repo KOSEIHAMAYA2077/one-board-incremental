@@ -46,6 +46,16 @@ namespace IncrementalGame.Core
     public static class MomentumRules
     {
         public const double LaunchSpeed = 900, MaximumSpeed = 1800, Drag = 120, StopSpeed = 80, Radius = 8;
+        public const double TailSpeed = 300, TailDrag = 880;
+        public static double TimeSpeed(double speed, double seconds, bool quickTail)
+        {
+            if (!quickTail) return Math.Max(0, speed - Drag * seconds);
+            // Split a tick at the threshold, so crossing it never applies the
+            // stronger brake to the preceding high-speed portion.
+            var fastTime = Math.Min(seconds, Math.Max(0, speed - TailSpeed) / Drag);
+            var result = Math.Max(0, speed - Drag * fastTime - TailDrag * (seconds - fastTime));
+            return result <= StopSpeed + 1e-9 ? Math.Min(result, StopSpeed) : result;
+        }
         public const double Left = 320, Right = 1560, Top = 120, Bottom = 760, ZoneRadius = 65;
         public static readonly SimVector2 Gun = new SimVector2(940, 725);
         public static double BaseDamage(MomentumAmmo ammo) => ammo == MomentumAmmo.Normal ? 40 : 26;
@@ -235,7 +245,7 @@ namespace IncrementalGame.Core
         private void Step(MomentumBall ball, double seconds)
         {
             if (Time >= ball.ExpiresAt) { ball.Alive = false; return; }
-            SetSpeed(ball, ball.Speed - MomentumRules.Drag * seconds);
+            SetSpeed(ball, MomentumRules.TimeSpeed(ball.Speed, seconds, Progress != null));
             if (!ball.Alive) return;
             var remaining = seconds + ball.PendingTime; ball.PendingTime = 0;
             var duration = remaining; var start = Time - duration; var elapsed = 0.0;

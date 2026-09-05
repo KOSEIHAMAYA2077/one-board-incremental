@@ -9,6 +9,34 @@ namespace IncrementalGame.Tests.PlayMode
 {
     public sealed class MomentumPlayModeTests
     {
+        [UnityTest] public IEnumerator BrakingShrinksVisualsAndAfterglowNeverExtendsAttack()
+        {
+            var root=new GameObject("Brake view fixture");
+            var sim=new MomentumSimulation(progress:new MomentumProgress());
+            var view=root.AddComponent<MomentumNeonView>();view.Initialize(sim);
+            try
+            {
+                var b=new MomentumBall { Id=999, Position=new SimVector2(800,780), Velocity=new SimVector2(300,0), Boosted=true };
+                sim.Balls.Add(b);view.Sync(sim);
+                var body=root.transform.Find("Neon projectile 999/Crystal projectile");
+                var before=body.localScale.x;
+                for(var i=0;i<10;i++) { sim.Tick(1.0/60);view.Sync(sim); }
+                Assert.That(body.localScale.x,Is.LessThan(before*.7f));
+                var radius=b.Radius;Assert.That(radius,Is.EqualTo(MomentumRules.Radius),"Visual shrink does not change hit radius");
+                sim.SetEditing(true);var frozen=body.localScale;
+                sim.Tick(1.0/60);view.Sync(sim);Assert.That(body.localScale,Is.EqualTo(frozen));
+                sim.SetEditing(false);
+                for(var i=0;i<5;i++) { sim.Tick(1.0/60);view.Sync(sim); }
+                Assert.That(sim.Balls,Is.Empty);Assert.That(view.FlightCount,Is.Zero);
+                Assert.That(view.TailGlowCount,Is.EqualTo(1));Assert.That(sim.Ready,Is.True,"Afterglow is not an attack");
+                sim.SetEditing(true);sim.Tick(.05);view.Sync(sim);Assert.That(view.TailGlowCount,Is.EqualTo(1));
+                sim.SetEditing(false);
+                for(var i=0;i<8;i++) { sim.Tick(1.0/60);view.Sync(sim); }
+                Assert.That(view.TailGlowCount,Is.Zero);
+            }
+            finally { Object.Destroy(root); }
+            yield return null;
+        }
         [UnityTest] public IEnumerator ClearPanelAdvancesRetriesAndProtectsFinalStageAndClickThrough()
         {
             var root=new GameObject("Clear panel fixture"); root.SetActive(false);

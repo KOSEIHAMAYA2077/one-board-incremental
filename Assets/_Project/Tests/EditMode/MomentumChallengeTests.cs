@@ -6,6 +6,38 @@ namespace IncrementalGame.Tests.EditMode
 {
     public sealed class MomentumChallengeTests
     {
+        [TestCase(.05)] [TestCase(1.0/60)] [TestCase(.01)]
+        public void QuickTailStopsWithinQuarterSecondWithoutLongSlide(double tick)
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress()); sim.Targets.Clear(); sim.Obstacles.Clear();
+            var b=new MomentumBall { Id=100, Position=new SimVector2(800,400), Velocity=new SimVector2(300,0), Boosted=true, Generation=5 };
+            sim.Balls.Add(b); var steps=(int)System.Math.Round(.25/tick);
+            for(var i=0;i<steps-1;i++) sim.Tick(tick);
+            Assert.That(b.Alive,Is.True);
+            sim.Tick(tick);
+            Assert.That(b.Alive,Is.False); Assert.That(sim.Balls,Is.Empty);
+            Assert.That(b.Position.X-800,Is.InRange(30,50),"The old low-speed tail travelled about 348 logical pixels");
+        }
+        [Test] public void BrakePreservesFastFlightAndSplitsThresholdTimeExactly()
+        {
+            Assert.That(MomentumRules.TimeSpeed(900,1.0/60,true),Is.EqualTo(898).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(306,.05,true),Is.EqualTo(300).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(301,1.0/60,true),Is.EqualTo(300-880.0/120).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(300,.05,false),Is.EqualTo(294),"Legacy lab keeps its decay");
+            var once=MomentumRules.TimeSpeed(301,.05,true);
+            var split=301.0; for(var i=0;i<3;i++) split=MomentumRules.TimeSpeed(split,1.0/60,true);
+            Assert.That(split,Is.EqualTo(once).Within(1e-8));
+        }
+        [Test] public void QuickTailFreezesDuringPauseAndStillDeliversLastImpact()
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress()); sim.Targets.Clear(); sim.Obstacles.Clear();
+            var target=new MomentumTarget { Id=100, Position=new SimVector2(800,300), Hp=90, Armored=true };sim.Targets.Add(target);
+            var b=new MomentumBall { Id=100, Position=new SimVector2(800,350), Velocity=new SimVector2(0,-300), Boosted=true };
+            sim.Balls.Add(b);sim.SetEditing(true);Run(sim,60);
+            Assert.That(b.Speed,Is.EqualTo(300));Assert.That(b.Alive,Is.True);
+            sim.SetEditing(false);sim.Tick(1.0/60);
+            Assert.That(target.Hp,Is.LessThan(90));Assert.That(b.Alive,Is.False);
+        }
         private static void Run(MomentumSimulation sim, int ticks = 660) { for(var i=0;i<ticks;i++) sim.Tick(1.0/60); }
         private static MomentumProgress Full(int mods=14) => new MomentumProgress { gold=1000, highestStage=2, masteryMask=7, unlockedMods=127, equippedMods=mods, uziUnlocked=true };
         [Test] public void ArenaHasTwelveSeparatedTargetsAcrossStagesAndSeeds()

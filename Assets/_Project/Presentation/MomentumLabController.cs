@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.5.3-crystal";
+        public const string GameVersion = "0.5.4-brake";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -175,11 +175,14 @@ namespace IncrementalGame.Presentation
                     _balls.Add(ball.Id, view);
                 }
                 view.Head.transform.position = LogicalSpace.ToWorld(ball.Position);
-                view.Head.transform.localScale = Vector3.one * (float)(ball.Radius * 2 / 100);
+                var tail=Simulation.Progress!=null?Mathf.Clamp01((float)((ball.Speed-MomentumRules.StopSpeed)/(MomentumRules.TailSpeed-MomentumRules.StopSpeed))):1f;
+                var strength=Mathf.SmoothStep(0,1,tail);
+                view.Head.transform.localScale = Vector3.one * (float)(ball.Radius * 2 / 100)*Mathf.Lerp(.35f,1f,strength);
                 view.Head.enabled = !NeonEnabled; view.Trail.enabled = !NeonEnabled;
                 var color = ball.Boosted ? Color.Lerp(AmmoColor(ball.Ammo), Color.white, .5f) : AmmoColor(ball.Ammo);
+                color.a=Mathf.Lerp(.15f,1f,strength);
                 view.Head.color = color; view.Trail.startColor = new Color(color.r, color.g, color.b, .15f); view.Trail.endColor = color;
-                view.Points.Enqueue(LogicalSpace.ToWorld(ball.Position)); while (view.Points.Count > 18) view.Points.Dequeue();
+                view.Points.Enqueue(LogicalSpace.ToWorld(ball.Position)); while (view.Points.Count > Mathf.RoundToInt(Mathf.Lerp(2,18,strength))) view.Points.Dequeue();
                 view.Trail.positionCount = view.Points.Count; view.Trail.SetPositions(view.Points.ToArray());
             }
             var remove = new List<int>();

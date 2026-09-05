@@ -1,5 +1,9 @@
 # MOMENTUM LAB：速度を使い切る三発マガジン
 
+## 最新Patch：0.5.4-brake
+
+Master v0.7.4 §33.8。Challengeの低速域300以下だけ880/sで減速し，300→停止80を約0.25秒へ短縮。高速域は120/s，境界をまたぐTickは時間を分割する。再加速時は速度に応じて通常減速へ復帰。低速域の弾・尾を収縮し，消滅後は最大0.12秒の非攻撃光のみ。再射撃条件・Save・初速・抵抗・分裂・旧Labと旧Buildは維持。受入Testは複数Tick幅の停止時間／距離，境界，高速域不変，Pause，最後のHit，再加速，表示収縮と余韻の非干渉，既存Test，Windows実描画。
+
 ## 最新Patch：0.5.3-crystal / Lucent Kit V1
 
 Master v0.7.3 §33.7。半透明のOriginal 3Dアセット一式と独立Gallery，HP／Goldenの表示変化，浮遊回転を実装。旧Game Logic／Save／Buildを保持。F3は旧Neon Meshとの比較，F2は旧図形表示。Galleryの過充電・凍結は表示見本のみ。検証はMeshの面数・有限値・外向き法線，Prefab再利用と共有Material非破壊，Game状態非干渉／Pause，既存Test，Windows実描画とFHD可読性。

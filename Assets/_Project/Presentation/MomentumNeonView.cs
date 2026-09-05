@@ -10,6 +10,7 @@ namespace IncrementalGame.Presentation
         private readonly Dictionary<int, Crystal> _targets = new Dictionary<int, Crystal>();
         private readonly Dictionary<int, Flight> _flights = new Dictionary<int, Flight>();
         private readonly List<Spark> _sparks = new List<Spark>();
+        private readonly List<TailGlow> _tailGlows = new List<TailGlow>();
         private readonly List<Mesh> _meshes = new List<Mesh>();
         private Material _crystalMaterial, _glowMaterial;
         private Mesh _crystal, _diamond, _quad;
@@ -24,6 +25,7 @@ namespace IncrementalGame.Presentation
         public int TargetCount => _targets.Count;
         public int FlightCount => _flights.Count;
         public int SparkCount => _sparks.Count;
+        public int TailGlowCount => _tailGlows.Count;
         public float CrystalDepth => _crystal.bounds.size.z;
 
         public void Initialize(MomentumSimulation sim)
@@ -156,17 +158,35 @@ namespace IncrementalGame.Presentation
                     f=new Flight { Root=root,Body=body,Aura=aura,Trail=trail,Soft=soft }; _flights.Add(b.Id,f);
                 }
                 f.Root.position=LogicalSpace.ToWorld(b.Position);
-                f.Body.transform.localScale=Vector3.one*(float)(b.Radius/100);
+                var tail = sim.Progress != null ? Mathf.Clamp01((float)((b.Speed-MomentumRules.StopSpeed)/(MomentumRules.TailSpeed-MomentumRules.StopSpeed))) : 1f;
+                var strength = Mathf.SmoothStep(0,1,tail);
+                var size = Mathf.Lerp(.35f,1f,strength);
+                f.Tailing=tail<1; f.Color=c;
+                f.Body.transform.localScale=Vector3.one*(float)(b.Radius/100)*size;
+                f.Aura.transform.localScale=Vector3.one*.31f*size;
                 f.Body.transform.localRotation=Quaternion.Euler(0,0,(float)(-System.Math.Atan2(b.Velocity.Y,b.Velocity.X)*180/System.Math.PI));
-                Tint(f.Body,Color.Lerp(c,Color.white,.65f)); Tint(f.Aura,WithAlpha(c,b.Boosted?.9f:.6f));
-                if(sim.Time!=_lastTime || f.Points.Count==0) { f.Points.Enqueue(f.Root.position); while(f.Points.Count>18) f.Points.Dequeue(); }
+                var light=Mathf.Lerp(.15f,1f,strength);
+                Tint(f.Body,Color.Lerp(c,Color.white,.65f)*Mathf.Lerp(.4f,1f,strength)); Tint(f.Aura,WithAlpha(c,(b.Boosted?.9f:.6f)*light));
+                if(sim.Time!=_lastTime || f.Points.Count==0) f.Points.Enqueue(f.Root.position);
+                while(f.Points.Count>Mathf.RoundToInt(Mathf.Lerp(2,18,strength))) f.Points.Dequeue();
                 var points=f.Points.ToArray();
-                UpdateTrail(f.Trail,points,c,.045f); UpdateTrail(f.Soft,points,WithAlpha(c,b.Boosted?.3f:.16f),b.Boosted?.19f:.13f);
+                UpdateTrail(f.Trail,points,WithAlpha(c,light),.045f*size); UpdateTrail(f.Soft,points,WithAlpha(c,(b.Boosted?.3f:.16f)*light),(b.Boosted?.19f:.13f)*size);
             }
             var remove=new List<int>();
             foreach(var pair in _flights) if(!alive.Contains(pair.Key))
-            { Destroy(pair.Value.Root.gameObject); Destroy(pair.Value.Trail.gameObject); Destroy(pair.Value.Soft.gameObject); remove.Add(pair.Key); }
+            {
+                var f=pair.Value;
+                if(f.Tailing && sim.Time>_lastTime && _tailGlows.Count<64)
+                    _tailGlows.Add(new TailGlow { Mesh=Glow(transform,"Tail afterglow",transform.InverseTransformPoint(f.Root.position),.12f,WithAlpha(f.Color,.4f),8), Color=f.Color, End=sim.Time+.12 });
+                Destroy(f.Root.gameObject); Destroy(f.Trail.gameObject); Destroy(f.Soft.gameObject); remove.Add(pair.Key);
+            }
             foreach(var id in remove) _flights.Remove(id);
+            for(var i=_tailGlows.Count-1;i>=0;i--)
+            {
+                var g=_tailGlows[i]; var life=Mathf.Clamp01((float)((g.End-sim.Time)/.12));
+                if(life<=0) { Destroy(g.Mesh.gameObject); _tailGlows.RemoveAt(i); continue; }
+                g.Mesh.transform.localScale=Vector3.one*.12f*life; Tint(g.Mesh,WithAlpha(g.Color,.4f*life));
+            }
             _lastTime=sim.Time;
         }
 
@@ -229,7 +249,8 @@ namespace IncrementalGame.Presentation
         { var n=v.Count; v.Add(a);v.Add(b);v.Add(d);c.Add(color);c.Add(color);c.Add(color);t.Add(n);t.Add(n+1);t.Add(n+2); }
         private void OnDestroy() { foreach(var mesh in _meshes) Destroy(mesh); if(_crystalMaterial!=null) Destroy(_crystalMaterial); if(_glowMaterial!=null) Destroy(_glowMaterial); }
         private sealed class Crystal { public Transform Root; public MeshRenderer Body,Aura; public Color Color; public float Flash,Kick,Radius; }
-        private sealed class Flight { public Transform Root; public MeshRenderer Body,Aura; public LineRenderer Trail,Soft; public readonly Queue<Vector3> Points=new Queue<Vector3>(); }
+        private sealed class TailGlow { public MeshRenderer Mesh; public Color Color; public double End; }
+        private sealed class Flight { public Transform Root; public MeshRenderer Body,Aura; public LineRenderer Trail,Soft; public bool Tailing; public Color Color; public readonly Queue<Vector3> Points=new Queue<Vector3>(); }
         private sealed class Spark { public MeshRenderer Mesh; public Vector3 Velocity; public float Life,Size; public Color Color; }
     }
 }
