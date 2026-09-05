@@ -259,6 +259,7 @@ namespace IncrementalGame.Presentation
             var args = Environment.GetCommandLineArgs(); var index = Array.IndexOf(args, "-momentum-capture");
             if (index + 1 >= args.Length) yield break;
             var folder = args[index + 1]; Directory.CreateDirectory(folder);
+            Screen.SetResolution(1920, 1080, FullScreenMode.Windowed);
             yield return new WaitForSecondsRealtime(1); yield return new WaitForEndOfFrame();
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;

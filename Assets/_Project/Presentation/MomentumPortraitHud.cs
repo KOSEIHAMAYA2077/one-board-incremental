@@ -45,7 +45,7 @@ namespace IncrementalGame.Presentation
             Label(44,307,410,28,$"累計Damage {sim.Stats.TotalDamage:0} / 撃破 {sim.DestroyedCount}",_body);
             Label(44,348,410,30,StageNames[sim.Stage],_title);
             Label(44,389,410,51,$"マガジン {sim.ChallengeMagazines} / {sim.ChallengeLimit} 使用\n残りの的 {sim.RemainingTargets} / 12　生存敵のHPは継続",_body);
-            var state = sim.ChallengeState == MomentumChallengeState.Cleared ? "CLEAR! 次Stageへ / 既到達Stageも再訪可" : sim.ChallengeState == MomentumChallengeState.Failed ? "挑戦終了。獲得Goldを保持して再挑戦。" : "1マガジン全破壊 → 特殊効果を恒久開放";
+            var state = sim.ChallengeState == MomentumChallengeState.Cleared ? (sim.ChallengeMagazines==1?"ONE MAG CLEAR! 特殊効果を開放。":"CLEAR! 次Stageへ / 既到達Stageも再訪可") : sim.ChallengeState == MomentumChallengeState.Failed ? "挑戦終了。獲得Goldを保持して再挑戦。" : "1マガジン全破壊 → 特殊効果を恒久開放";
             Label(44,451,410,45,state,_body);
             for(var i=0;i<3;i++)
             {
@@ -77,10 +77,11 @@ namespace IncrementalGame.Presentation
                 var price=mod==MomentumMod.Power?10:mod==MomentumMod.Split?20:0;
                 var unlock=price>0?$"開放 {price} G":$"Stage {(mod==MomentumMod.Golden?1:mod==MomentumMod.Blast?2:3)} を1マガジンClear";
                 var label=owned?$"{(p.Has(mod)?"●":"○")} {ModName(mod)}  [{MomentumProgress.Cost(mod)}pt]":$"{ModName(mod)} / {unlock}";
-                if(ActionButton(new Rect(1146,310+i*43,410,38),label,free && (owned || price>0 && p.gold>=price)))
+                var fits=p.Has(mod) || MomentumProgress.Used(p.equippedMods)+MomentumProgress.Cost(mod)<=20;
+                if(ActionButton(new Rect(1146,310+i*43,410,38),label,free && (owned && fits || !owned && price>0 && p.gold>=price)))
                 { if(owned) p.Toggle(mod); else p.BuyMod(mod); SaveProgress(); }
             }
-            Label(1146,614,410,34,$"連鎖10秒 / 同時256弾・生成1024弾まで\n分裂抑制 {sim.SuppressedSplits} 回 / 親弾は継続",_small);
+            Label(1146,610,410,40,$"連鎖10秒 / 同時256弾・生成1024弾まで\n分裂抑制 {sim.SuppressedSplits} 回 / 親弾は継続",_small);
             if(ActionButton(new Rect(1146,653,410,38),p.magazineLevel==2?"携行マガジン 5 / 最大":$"携行 {p.MagazineLimit} → {p.MagazineLimit+1} / {p.MagazinePrice} G",free && p.magazineLevel<2 && p.gold>=p.MagazinePrice)) { p.BuyMagazine(); SaveProgress(); }
             if(ActionButton(new Rect(1146,697,410,38),p.powerLevel==5?"基礎火力 +50% / 最大":$"基礎火力 +{p.powerLevel*10}% → +{(p.powerLevel+1)*10}% / {p.PowerPrice} G",free && p.powerLevel<5 && p.gold>=p.PowerPrice)) { p.BuyPower(); SaveProgress(); }
             Label(1146,743,410,25,"携行数の強化は次のChallengeから適用",_small);
