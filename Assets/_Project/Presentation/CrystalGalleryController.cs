@@ -105,7 +105,7 @@ namespace IncrementalGame.Presentation
             {
                 var k=_kinds[i];var moving=k!=5;
                 _pieces[i].transform.localPosition=_homes[i]+Vector3.up*(moving?Mathf.Sin(time*1.4f+i)*.07f:0);
-                _pieces[i].transform.localRotation=Quaternion.Euler(k==5?_tilt*.4f:_tilt,k==5?-12:18,k==5?0:k==4?-24:_spin+i*17);
+                _pieces[i].transform.localRotation=Quaternion.Euler(_tilt,k==5?-12:18,k==5?0:k==4?-24:_spin+i*17);
                 _pieces[i].Apply(_health,(CrystalStatus)_status,_impact,_opacity);
             }
         }
