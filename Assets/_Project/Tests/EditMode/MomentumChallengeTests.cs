@@ -26,6 +26,7 @@ namespace IncrementalGame.Tests.EditMode
         [Test] public void ReloadOverlapsFlightAndAllDescendantsExpireTogether()
         {
             var sim=new MomentumSimulation(progress:Full());
+            foreach(var t in sim.Targets) t.Hp=1000000;
             Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
             Run(sim,90);
             sim.Balls.Add(new MomentumBall { Id=9999, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-100), ExpiresAt=10, Generation=5 });

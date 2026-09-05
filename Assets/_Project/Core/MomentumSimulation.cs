@@ -200,7 +200,12 @@ namespace IncrementalGame.Core
                 var delta = ball.Position - target.Position; var radius = target.Radius + ball.Radius;
                 if (!target.Alive) { ball.Exiting.Remove(target.Id); continue; }
                 if (ball.Exiting.Contains(target.Id))
-                { if (delta.Magnitude > radius + .1) ball.Exiting.Remove(target.Id); else continue; }
+                {
+                    // Smaller newborn children start outside their own radius at the parent's
+                    // entry point. Keep the inherited exclusion until they actually leave.
+                    if (delta.Magnitude > radius + .1 && (ball.Generation == 0 || SimVector2.Dot(delta, ball.Velocity) > 0)) ball.Exiting.Remove(target.Id);
+                    else continue;
+                }
                 if (MomentumRules.SweepCircle(delta, ball.Velocity, radius, remaining, out var t))
                     Consider(ref best, t, 0, target.Id, (delta + ball.Velocity * t).Normalized, target);
             }
