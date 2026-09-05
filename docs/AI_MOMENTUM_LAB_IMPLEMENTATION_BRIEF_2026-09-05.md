@@ -1,5 +1,9 @@
 # MOMENTUM LAB：速度を使い切る三発マガジン
 
+## 最新Patch：0.5.3-crystal / Lucent Kit V1
+
+Master v0.7.3 §33.7。半透明のOriginal 3Dアセット一式と独立Gallery，HP／Goldenの表示変化，浮遊回転を実装。旧Game Logic／Save／Buildを保持。F3は旧Neon Meshとの比較，F2は旧図形表示。Galleryの過充電・凍結は表示見本のみ。検証はMeshの面数・有限値・外向き法線，Prefab再利用と共有Material非破壊，Game状態非干渉／Pause，既存Test，Windows実描画とFHD可読性。
+
 ## 最新Patch：0.5.2-clear
 
 正本はMaster v0.7.2 §33.6。Clear確定時の中央案内にCLEAR・結果・次へ・もう一度を表示。最終Stageの次へは無効化し，全3Stage達成を明示。左右の強化操作は継続可能。遷移の誤射防止と再挑戦／次Stage／最終StageをPlayModeで確認し，FHDのClear画面を診断撮影する。敵の追加強化・Stage素材・周回難化は候補メモに留め，今回は実装しない。

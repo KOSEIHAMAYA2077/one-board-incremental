@@ -64,7 +64,7 @@ namespace IncrementalGame.Presentation
             Label(44,609,410,28,"RECENT EVENTS",_small);
             var row=0; foreach(var entry in _combatFeed) Label(44,644+row++*23,410,23,entry,_small);
             Label(44,773,410,27,$"{GameVersion} / {BuildMetadata.CommitHash}",_small);
-            Label(44,805,410,48,ProgressWarning ?? $"Seed {sim.Seed} / 自動保存あり\nF2：表示比較   R：Pause   Space：残弾回収",_small);
+            Label(44,805,410,48,ProgressWarning ?? $"Seed {sim.Seed} / 自動保存あり\nF3：結晶比較   F2：旧表示   R：Pause   Space：回収",_small);
         }
         private void DrawLoadout()
         {

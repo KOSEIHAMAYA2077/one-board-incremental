@@ -1,6 +1,6 @@
 # 一盤面式能動型インクリメンタルゲーム Master仕様書
 
-文書Version：0.7.2
+文書Version：0.7.3
 更新日：2026年9月5日
 対象Engine：Unity 6000.3.18f1  
 第一対象Platform：Windows 10／11 x64  
@@ -1819,6 +1819,10 @@ Prototype 0の実装順は次とする．
 
 ## 30．変更履歴
 
+### 0.7.3．2026年9月5日
+
+- User承認の半透明Crystal Asset Kitを§33.7に追加。敵・バンパー・銃・筐体，表示専用のHP／状態色，浮遊回転，独立Gallery。Game Logicや経済は変更しない。
+
 ### 0.7.2．2026年9月5日
 
 - Clear後の待機が停止に見える問題に対し，中央へCLEAR／次へ／もう一度を表示。最終Stageでは次へを無効化し，全3Stage達成を明示。経済・敵強化の追加は今回行わない。
@@ -1938,7 +1942,7 @@ Userは，単発五発循環より「仕込んだマガジンを一クリック�
 - 盤面にはHPを残し、抵抗や多数の命中数値は左へ移動。短い報酬/加速Popupは最大3件表示。左右のUIクリックを発射判定へ通さない。
 - Game Version 0.4.2-portrait。音・発射間隔・速度・威力・抵抗・報酬・弾倉Save schemaは継続。旧Build/Tagは保存。盤面形状変更により反射頻度やDPS自体は旧横長と変わり得る。
 
-## 33．Challenge Arsenal（最新試作 0.5.2-clear）
+## 33．Challenge Arsenal（最新試作 0.5.3-crystal）
 
 Userは有限マガジンのChallenge，容量内の全弾効果，恒久開放，2銃，Stage進行の試作を承認した。この章だけを最新実装の正本とし，旧章の一盤面／Stage Resetなし，個別弾Slot，残弾中再射撃，禁止機能と競合する箇所を本試作に限って上書きする。旧Prototypeへ遡及適用しない。以下はすべて試作用INITIALであり，完成版Balanceではない。
 
@@ -1992,3 +1996,12 @@ Userは有限マガジンのChallenge，容量内の全弾効果，恒久開放�
 - Clear確定時に中央盤面を暗くし，CLEAR，Stage名，使用マガジン数，今回の獲得Gold，「次へ」「もう一度」を表示する。左右の強化とStage選択は引き続き使用可能。
 - 次へは現在Stageの次を開始。Stage3では次へを無効にし「全3ステージ達成」を明示する。もう一度は現在Stageを再挑戦。どちらも既存のChallenge開始処理を使い，全的HP・配置と使用マガジン数を更新する。Gold・所有強化・Masteryは保持する。
 - 遷移クリックを新盤面の射撃へ流さない。Clear以外ではこの案内を表示しない。Pause中は隠し，Rで再開すれば再表示。Clearの論理確定条件・報酬・敵HP・Save schema・速度300の再射撃は変更しない。
+
+### 33.7．Lucent Crystal Asset Kit V1（0.5.3-crystal）
+
+- Original 3D Mesh・Material・Prefabとして，正四面体，正八面体，20尖端の星形，16／32三角面の双角錐，多面球／滑らかな球，バンパー，銃身と基部，筐体，弾頭を保存。OBJ形状も別出力。参考作品のアセット抽出・流用はしない。
+- 外殻は半透明の面光・縁光・ハイライト，内部にCoreと状態Ring。物理的な屈折／透過光のSimulationではない。縮小画像の低コストBloomを加え，UIはBloom後に描画して文字を滲ませない。
+- 残HP割合1→0で外殻を基色から赤へ変化。CoreとRingはGolden時に金色。HPは既存値を読むだけ。過充電／凍結色はGallery限定の表示見本であり，新しいGameスキルを追加しない。
+- Game内はMeshを35度傾け，10度/sで回転し，約1.6論理pixelの上下揺れと奥行き揺れをSimulation時間に同期。論理Target位置と円形判定は不変，Pauseで表示も停止。論理半径の細い足元輪を保持。種類の増加は外観のみで能力差を作らない。
+- F3で旧Neon Meshと新Kitを比較，F2で旧図形表示。切替はGame State・Saveへ影響しない。旧Mesh生成Code・旧Buildは保持する。
+- 独立CrystalGalleryで形状11Prefab，HP，透明度，状態色，傾き，回転浮遊，Hit Flashを操作。GalleryはSaveを持たずGame Simulationを変更しない。適用予定の素材経済・周回難化は実装しない。

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace IncrementalGame.Presentation
 {
     // Presentation only: no colliders, simulation writes, or gameplay RNG calls.
-    public sealed class MomentumNeonView : MonoBehaviour
+    public sealed partial class MomentumNeonView : MonoBehaviour
     {
         private readonly Dictionary<int, Crystal> _targets = new Dictionary<int, Crystal>();
         private readonly Dictionary<int, Flight> _flights = new Dictionary<int, Flight>();
@@ -88,11 +88,12 @@ namespace IncrementalGame.Presentation
             _gun=Node("Crystal barrel aim",gunBase);
             var barrel=MeshObject(_gun,"Crystal barrel",_diamond,_crystalMaterial,6);
             barrel.transform.localPosition=new Vector3(0,.17f,0); barrel.transform.localScale=new Vector3(.08f,.28f,.15f); Tint(barrel,new Color(.76f,.9f,1));
+            InitializeCrystalKit(sim);
             Sync(sim);
         }
 
         public void SetAim(SimVector2 direction)
-        { _gun.localRotation=Quaternion.Euler(0,0,(float)(-System.Math.Atan2(direction.Y,direction.X)*180/System.Math.PI-90)); }
+        { _gun.localRotation=Quaternion.Euler(0,0,(float)(-System.Math.Atan2(direction.Y,direction.X)*180/System.Math.PI-90)); if(_kitGun!=null) _kitGun.localRotation=_gun.localRotation; }
 
         public void Advance(MomentumSimulation sim, double delta)
         {
@@ -125,6 +126,7 @@ namespace IncrementalGame.Presentation
 
         public void Sync(MomentumSimulation sim)
         {
+            SyncCrystalKit(sim);
             foreach(var t in sim.Targets)
             {
                 var view=_targets[t.Id]; view.Root.gameObject.SetActive(t.Alive);

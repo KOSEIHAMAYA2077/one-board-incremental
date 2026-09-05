@@ -26,6 +26,9 @@ function Invoke-MomentumUnity([string]$Name, [string[]]$Extra) {
 if ($Command -eq 'generate' -or -not (Test-Path (Join-Path $MomentumProject 'Assets\_Project\Scenes\MomentumLab.unity'))) {
     Invoke-MomentumUnity 'generate' @('-quit','-executeMethod','IncrementalGame.Editor.MomentumLabSceneBuilder.Generate')
 }
+if (-not (Test-Path (Join-Path $MomentumProject 'Assets\Resources\CrystalKitV1\Library.asset'))) {
+    Invoke-MomentumUnity 'crystal-assets' @('-quit','-executeMethod','IncrementalGame.Editor.CrystalAssetBuilder.Generate')
+}
 if ($Command -in @('test','verify')) {
     Invoke-MomentumUnity 'compile' @('-quit')
     foreach ($platform in @('EditMode','PlayMode')) {
@@ -38,11 +41,11 @@ if ($Command -in @('test','verify')) {
 if ($Command -in @('build','verify')) {
     $env:MOMENTUM_BUILD_PATH = Join-Path $MomentumRun 'Windows\OneBoardMomentumLab.exe'
     Invoke-MomentumUnity 'build' @('-quit','-buildTarget','StandaloneWindows64','-executeMethod','IncrementalGame.Editor.MomentumLabSceneBuilder.BuildWindows')
-    $zip = Join-Path $MomentumRun 'OneBoardMomentumLab-v0.5.2-clear-Windows-x64.zip'
+    $zip = Join-Path $MomentumRun 'OneBoardMomentumLab-v0.5.3-crystal-Windows-x64.zip'
     Compress-Archive -Path (Join-Path $MomentumRun 'Windows\*') -DestinationPath $zip
     $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($zip))" | Set-Content -LiteralPath ($zip+'.sha256') -Encoding ascii
     $commit = git -C $MomentumProject rev-parse HEAD
-    @("Version: 0.5.2-clear", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $MomentumRun 'summary.txt') -Encoding utf8
+    @("Version: 0.5.3-crystal", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $MomentumRun 'summary.txt') -Encoding utf8
 }
 Write-Output "Artifacts: $MomentumRun"

@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: daa48892ee10af04cb9cf56cd8d48953, type: 3}
+  m_Name: Library
+  m_EditorClassIdentifier: IncrementalGame.Presentation::IncrementalGame.Presentation.CrystalKitLibrary
+  Shapes:
+  - {fileID: 4300000, guid: 7a0781b3fd214f94696d57ffde5bb1c3, type: 2}
+  - {fileID: 4300000, guid: 853c3b97bad26a54fbad327110c76402, type: 2}
+  - {fileID: 4300000, guid: 5d4b37676fcc9104e9475c7a366816f8, type: 2}
+  - {fileID: 4300000, guid: 5e1ac87dbd05dfc4d88b96a016b9b80b, type: 2}
+  - {fileID: 4300000, guid: 7c35742dcf2430f4488adf155ecc30da, type: 2}
+  - {fileID: 4300000, guid: 69935377571e96f41936354dcbf87127, type: 2}
+  - {fileID: 4300000, guid: 72bac06ff740be142813a0e1d8ea06dd, type: 2}
+  - {fileID: 4300000, guid: 4155cf674d350fb4180b64a201e8be65, type: 2}
+  Wires:
+  - {fileID: 4300000, guid: ce87f89b92a46494ab6cc182f1a2ab3a, type: 2}
+  - {fileID: 4300000, guid: 40df904ddd5ec4d41b9fbf30bff385a2, type: 2}
+  - {fileID: 4300000, guid: 074526c46aecdb64a9d85130ce22bf64, type: 2}
+  - {fileID: 4300000, guid: 5bd184a791cb22045a4ff90750913e6d, type: 2}
+  - {fileID: 4300000, guid: b380da0ad7d908b42aee5cb4522089ad, type: 2}
+  - {fileID: 4300000, guid: 2ac127ce381883243b84c15afebcb52d, type: 2}
+  - {fileID: 4300000, guid: 6989cbd78001b394cb98b618da15fcb0, type: 2}
+  - {fileID: 4300000, guid: c29c1e45d6724a94abc7ccc8776d539b, type: 2}
+  Ring: {fileID: 4300000, guid: 6801b9dbbcaa4184ea6dd10cf543ab71, type: 2}
+  Glass: {fileID: 2100000, guid: 2ebd821aad0e64341960d1bac0ab2d1a, type: 2}
+  Metal: {fileID: 2100000, guid: 982c1d59adc2b9046a06bd0df0225425, type: 2}
+  Light: {fileID: 2100000, guid: 24da6bb115e388d408b5ce9ea6fca655, type: 2}

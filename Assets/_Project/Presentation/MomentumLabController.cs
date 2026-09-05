@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.5.2-clear";
+        public const string GameVersion = "0.5.3-crystal";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -26,7 +26,7 @@ namespace IncrementalGame.Presentation
         private readonly Dictionary<GUIStyle, GUIStyle> _scaled = new Dictionary<GUIStyle, GUIStyle>();
         private readonly List<string> _overflows = new List<string>();
         private float _scale;
-        private bool _focus = true, _diagnostic, _stressDiagnostic;
+        private bool _focus = true, _diagnostic, _stressDiagnostic, _flatCaptureDetected;
         private int _blockedFrame, _heardShots, _lastGold;
         private string _message = "一クリックで三発。水色の動くゾーンに通してみよう。";
         private string _logPath;
@@ -41,6 +41,7 @@ namespace IncrementalGame.Presentation
             var progress = _stressDiagnostic ? new MomentumProgress { gold=1000, highestStage=2, powerLevel=5, uziUnlocked=true, gun=1, unlockedMods=15, equippedMods=15 } : LoadProgress();
             Simulation = new MomentumSimulation(progress: progress);
             _camera = GetComponentInChildren<Camera>(); _audio = GetComponent<PrototypeAudio>();
+            _camera.allowHDR=true;_camera.gameObject.AddComponent<LucentBloom>();
             Time.fixedDeltaTime = 1f / 60; Application.targetFrameRate = 120;
             BuildBoard();
             _legacyRenderers = GetComponentsInChildren<Renderer>();
@@ -115,6 +116,7 @@ namespace IncrementalGame.Presentation
         {
             if (!_focus) return;
             if (Input.GetKeyDown(KeyCode.F2)) SetNeonEnabled(!NeonEnabled);
+            if (Input.GetKeyDown(KeyCode.F3)) NeonView.SetCrystalKitEnabled(!NeonView.CrystalKitEnabled);
             if (Input.GetKeyDown(KeyCode.Space)) RecallVolley();
             if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
             var over = MouseAim(out var aim);
@@ -308,13 +310,20 @@ namespace IncrementalGame.Presentation
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
             File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; focused={Application.isFocused}; diagnosticMeanFrameMs={totalFrameMs/230:0.00}; diagnosticMaxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
-            Application.Quit(fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
+            Application.Quit(!_flatCaptureDetected && fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private void CaptureBoard(string path)
         {
             var rt = RenderTexture.GetTemporary(1920, 1080, 24); var old = RenderTexture.active; var cameraTarget = _camera.targetTexture;
             var texture = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
-            try { _camera.targetTexture = rt; _camera.Render(); RenderTexture.active = rt; texture.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); texture.Apply(); File.WriteAllBytes(path, texture.EncodeToPNG()); }
+            try
+            {
+                _camera.targetTexture = rt; _camera.Render(); RenderTexture.active = rt; texture.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); texture.Apply();
+                var low=1f;var high=0f;
+                for(var y=140;y<930;y+=8) for(var x=620;x<1300;x+=8) { var c=texture.GetPixel(x,y).grayscale;low=Mathf.Min(low,c);high=Mathf.Max(high,c); }
+                if(high-low<.04f) { _flatCaptureDetected=true;Debug.LogError("[Momentum] Flat board capture: post-process/render failure suspected."); }
+                File.WriteAllBytes(path, texture.EncodeToPNG());
+            }
             finally { _camera.targetTexture = cameraTarget; RenderTexture.active = old; RenderTexture.ReleaseTemporary(rt); Destroy(texture); }
         }
         private sealed class TargetView { public SpriteRenderer Shape; public LineRenderer Ring; }
