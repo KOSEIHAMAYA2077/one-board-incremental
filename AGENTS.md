@@ -18,6 +18,8 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
+最新試作はMomentum Lab（0.4.0-momentum）．Master §32と`docs/AI_MOMENTUM_LAB_IMPLEMENTATION_BRIEF_2026-09-05.md`を参照．User承認の新方向であり旧PrototypeのGame Logicは保持する．`.\scripts\momentum.ps1 verify`を使う．以下に残るPrototype 1A／2の記述は旧版の復元用．
+
 現在の追加実装はPrototype 2（0.3.0-recipe）．`docs/AI_PROTOTYPE2_IMPLEMENTATION_BRIEF_2026-09-05.md`を併読する．検証は`.\scripts\recipe.ps1 verify`．旧Prototype 0と1AのScene・Build・Brief・履歴を保持する．
 
 - Prototype 0外の機能を先回りして実装しない．

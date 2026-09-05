@@ -1,6 +1,12 @@
 # One Board Incremental
 
-## 最新の試作：RECIPE LAB / Prototype 2
+## 最新試作：MOMENTUM LAB / 速度資源型マガジン
+
+一クリックで三発を撃ち切り，速度が残る限り的を貫く試作．`R`で通常／貫通の三Slotを編集する．通常は高威力，貫通は抵抗による減速が1/4．装甲は弾種制限ではなく速度抵抗．水色の移動ゾーンは弾速×2，壁と障害物で反射．破壊した的だけ次の斉射で別位置へ補充する．旧Recipe・自由配置版はそのまま残す．
+
+Scene：`Assets/_Project/Scenes/MomentumLab.unity`．`.\scripts\momentum.ps1 verify`で検証・Windows Build．成果物は`Artifacts/Momentum/<日時>/Windows/OneBoardMomentumLab.exe`．Master §32とMomentum Briefが現行試作の正本．将来案と判断理由は`docs/ideas/2026-09-05-speed-resource-direction.md`．
+
+## 保存版：RECIPE LAB / Prototype 2
 
 五発Recipe（通常・貫通・分裂）と自由配置．`R`で弾の並び，`B`で配置，左クリックで一発．Cost合計4以内で編集する．直前の通常弾が特殊弾を最大2段階強化する．変更は次周期から（初回発射前だけ即時）．貫通はCollectorを直列に，分裂はAmplifierの先へ扇状に置くと違いを試せる．
 
