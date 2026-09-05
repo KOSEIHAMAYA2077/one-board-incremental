@@ -130,7 +130,7 @@ namespace IncrementalGame.Presentation
                 _gunBarrel.transform.rotation = Quaternion.Euler(0, 0, (float)(-Math.Atan2(dir.Y, dir.X) * 180 / Math.PI - 90));
             }
         }
-        private void FixedUpdate() { if (_focus) StepSimulation(1.0 / 60); }
+        private void FixedUpdate() { if (_focus && !_stressDiagnostic) StepSimulation(1.0 / 60); }
         public void StepSimulation(double seconds)
         {
             Simulation.Tick(seconds);
@@ -266,12 +266,14 @@ namespace IncrementalGame.Presentation
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;
             TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
-            var peakBalls=0; var maxFrameMs=0f; var totalFrameMs=0f;
+            var peakBalls=0; var maxFrameMs=0f; var totalFrameMs=0f; var peakCaptured=false;
             if (_stressDiagnostic)
             {
                 for(var frame=0;frame<240;frame++)
                 {
+                    StepSimulation(1.0/60);
                     peakBalls=Math.Max(peakBalls,Simulation.Balls.Count);
+                    if(!peakCaptured && Simulation.Balls.Count>=60) { CaptureBoard(Path.Combine(folder,"00-chain-board.png")); peakCaptured=true; }
                     if(frame>=10) { var ms=Time.unscaledDeltaTime*1000; maxFrameMs=Mathf.Max(maxFrameMs,ms); totalFrameMs+=ms; }
                     yield return null;
                 }
@@ -284,7 +286,7 @@ namespace IncrementalGame.Presentation
             SetEditing(true); var before = Simulation.Time; StepSimulation(1.0 / 60); var paused = before == Simulation.Time;
             yield return new WaitForEndOfFrame(); var editorOverflow = string.Join("\n", _overflows);
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
-            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; meanFrameMs={totalFrameMs/230:0.00}; maxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
+            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; focused={Application.isFocused}; diagnosticMeanFrameMs={totalFrameMs/230:0.00}; diagnosticMaxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
             Application.Quit(fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
