@@ -2,7 +2,9 @@
 
 2026-09-05時点。すべて開発中のPrereleaseであり、正式製品版ではない。リポジトリは非公開のまま。
 
-[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：Neon Crystal](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.4.1-neon)
+[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：縦長ステージ](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.4.2-portrait)
+
+追加保存：0.4.2-portrait（三列UI・中央9:16）、Build source `c5b138a9c978f06e06058cc85fedd6d94cf005e0`。ZIPは`OneBoardMomentumLab-v0.4.2-portrait-Windows-x64.zip`、SHA-256は`67765c29917ded503a1015a00345e3f29dbbdfea8b6f49541e4734cca27b23f0`。[操作・検証記録](PORTRAIT_STAGE_RELEASE_2026-09-05.md)。旧横長版も保持する。
 
 追加保存：0.4.1-neon（表示比較版）、Build source `b17fed20df60d3820536ba35d6cc387d1631b71e`。ZIPは`OneBoardMomentumLab-v0.4.1-neon-Windows-x64.zip`、SHA-256は`2b31f82eeefde898c47b378712a7688f398bfbdf9c42beeefb9e0ddf1e8cbfd3`。操作・検証は[新版記録](NEON_CRYSTAL_RELEASE_2026-09-05.md)。以下の6版も引き続き保持する。
 
