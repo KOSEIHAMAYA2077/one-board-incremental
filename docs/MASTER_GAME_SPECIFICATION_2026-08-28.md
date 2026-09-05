@@ -1,6 +1,6 @@
 # 一盤面式能動型インクリメンタルゲーム Master仕様書
 
-文書Version：0.5.0
+文書Version：0.5.1
 更新日：2026年9月5日
 対象Engine：Unity 6000.3.18f1  
 第一対象Platform：Windows 10／11 x64  
@@ -1122,6 +1122,8 @@ Coreは三段階の到達目標を持つ．`FIXED`
 
 ### 17.1．基準Layout
 
+Prototype 2の表示PatchではUser指示によりFHD（1920×1080）を基準とする．盤面論理座標は変えず，UI文字を小さめに整理し，整数Pixelで描画する．日本語の行高に十分な枠を確保し，NOW／弾名／PrimerとFooterの上下欠けを防ぐ．`INITIAL`
+
 ```text
 ┌ Gold 12.4K   Material 7/10   Core 42% ───────── [Pause] [設定] ┐
 │                                                               │
@@ -1814,6 +1816,10 @@ Prototype 0の実装順は次とする．
 ---
 
 ## 30．変更履歴
+
+### 0.5.1．2026年9月5日
+
+- User提供Screenshotの文字欠け・過大表示を受け，Prototype 2のFHD文字サイズ・行高・Pixel描画基準を追記．Game Logicは変更しない．Game Versionは0.3.1-recipe．
 
 ### 0.5.0．2026年9月5日
 

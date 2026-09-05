@@ -38,11 +38,11 @@ if ($Command -in @('test','verify')) {
 if ($Command -in @('build','verify')) {
     $env:RECIPE_BUILD_PATH = Join-Path $RecipeRun 'Windows\OneBoardRecipeLab.exe'
     Invoke-RecipeUnity 'build' @('-quit','-buildTarget','StandaloneWindows64','-executeMethod','IncrementalGame.Editor.RecipeLabSceneBuilder.BuildWindows')
-    $zip = Join-Path $RecipeRun 'OneBoardRecipeLab-v0.3.0-recipe-Windows-x64.zip'
+    $zip = Join-Path $RecipeRun 'OneBoardRecipeLab-v0.3.1-recipe-Windows-x64.zip'
     Compress-Archive -Path (Join-Path $RecipeRun 'Windows\*') -DestinationPath $zip
     $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($zip))" | Set-Content -LiteralPath ($zip+'.sha256') -Encoding ascii
     $commit = git -C $RecipeProject rev-parse HEAD
-    @("Version: 0.3.0-recipe", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $RecipeRun 'summary.txt') -Encoding utf8
+    @("Version: 0.3.1-recipe", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $RecipeRun 'summary.txt') -Encoding utf8
 }
 Write-Output "Artifacts: $RecipeRun"

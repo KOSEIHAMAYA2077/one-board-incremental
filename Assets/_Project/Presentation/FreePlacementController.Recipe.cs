@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class FreePlacementController
     {
-        public const string RecipeVersion = "0.3.0-recipe";
+        public const string RecipeVersion = "0.3.1-recipe";
         [SerializeField] public bool RecipeMode;
         public bool RecipeEditing { get; private set; }
         public RecipeCycle Recipe { get; private set; } = new RecipeCycle();
@@ -114,14 +114,14 @@ namespace IncrementalGame.Presentation
                 var source = index < Recipe.Slot && Recipe.Pending != null ? Recipe.Pending : Recipe.Active;
                 var type = source[index]; var x = 310 + n * 148;
                 Panel(new Rect(x, 12, 138, 85), n == 0 ? new Color(.17f, .23f, .29f) : new Color(.08f, .12f, .16f));
-                Label(x + 10, 15, 126, 22, n == 0 ? (Recipe.Ready ? "NOW" : "発射済／装填中") : n == 1 ? "NEXT" : "あと " + (n + 1), _small);
+                Label(x + 12, 16, 114, 24, n == 0 ? (Recipe.Ready ? "NOW" : "装填中") : n == 1 ? "NEXT" : "あと " + (n + 1), _small);
                 var old = GUI.color; GUI.color = BulletColor(type);
-                Label(x + 10, 37, 120, 29, BulletName(type), _title); GUI.color = old;
-                Label(x + 10, 71, 125, 22, $"{index + 1} / Primer {RecipeCycle.PrimerAt(source, index)}", _small);
+                Label(x + 12, 39, 114, 34, BulletName(type), _title); GUI.color = old;
+                Label(x + 12, 74, 114, 22, $"{index + 1} / Primer {RecipeCycle.PrimerAt(source, index)}", _small);
             }
             if (Button(new Rect(1070, 18, 235, 44), "弾の並び [R]")) SetRecipeEditing(!RecipeEditing);
             if (Button(new Rect(1320, 18, 250, 44), Editing ? "再開 [B]" : "配置 [B]")) SetEditing(!Editing);
-            Label(1070, 72, 480, 26, Recipe.Pending != null ? "次周期から新Recipeを適用" : "Capacity 4 / 通常 0・貫通 2・分裂 3", _small);
+            Label(1070, 72, 480, 26, Recipe.Pending != null ? "次周期から新Recipeを適用" : $"Capacity {RecipeCycle.TotalCost(Recipe.Active)} / 4　通常 0・貫通 2・分裂 3", _small);
             var progress = Recipe.Ready ? 1f : 1f - (float)(Recipe.Remaining / .65);
             Panel(new Rect(310, 102, 730 * progress, 4), BulletColor(Recipe.Current));
             foreach (var popup in _rewardPopups)
@@ -187,6 +187,8 @@ namespace IncrementalGame.Presentation
             if (flag < 0 || flag + 1 >= args.Length) yield break;
             var folder = args[flag + 1]; Directory.CreateDirectory(folder);
             yield return new WaitForSecondsRealtime(1);
+            yield return new WaitForEndOfFrame();
+            var playingOverflow = string.Join("\n", UiOverflows);
             _hasFocus = true; _blockedUntilFrame = -1;
             SetRecipeEditing(true);
             var applied = ApplyRecipe(new[] { RecipeBullet.Split, RecipeBullet.Normal, RecipeBullet.Normal, RecipeBullet.Normal, RecipeBullet.Normal });
@@ -197,11 +199,12 @@ namespace IncrementalGame.Presentation
             SetRecipeEditing(true); var before = SimulatedSeconds; SimulateTick(10);
             var paused = before == SimulatedSeconds;
             yield return new WaitForEndOfFrame(); ScreenCapture.CaptureScreenshot(Path.Combine(folder, "02-editor.png"));
+            var editorOverflow = string.Join("\n", UiOverflows);
             SetRecipeEditing(false);
             for (var i = 0; i < 180; i++) SimulateTick(1.0 / 60);
-            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"applied={applied}; branches={branches}; paused={paused}; gold={Gold}; active={ActiveShotCount}");
+            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"applied={applied}; branches={branches}; paused={paused}; gold={Gold}; active={ActiveShotCount}; screen={Screen.width}x{Screen.height}\nPlaying text overflow: {playingOverflow}\nEditor text overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.5f);
-            Application.Quit(applied && branches == 4 && paused && Gold == 4 && ActiveShotCount == 0 ? 0 : 1);
+            Application.Quit(applied && branches == 4 && paused && Gold == 4 && ActiveShotCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private sealed class RecipeRunView { public RecipeLineage Lineage; public int Id, RewardIndex; public readonly Dictionary<RoutingShot, RecipeProjectileView> Views = new Dictionary<RoutingShot, RecipeProjectileView>(); }
         private sealed class RecipeProjectileView { public LineRenderer Path; public SpriteRenderer Head; public int Contacts; }

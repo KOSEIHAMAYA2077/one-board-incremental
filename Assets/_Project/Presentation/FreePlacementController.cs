@@ -297,6 +297,7 @@ namespace IncrementalGame.Presentation
         {
             if (_camera == null) return;
             EnsureStyles();
+            if (Event.current.type == EventType.Repaint) _uiOverflows.Clear();
             var oldMatrix = GUI.matrix;
             var rect = _camera.pixelRect; var scale = rect.width / 1600;
             GUI.matrix = Matrix4x4.TRS(new Vector3(rect.x, Screen.height - rect.yMax, 0), Quaternion.identity, Vector3.one * scale);
@@ -330,7 +331,7 @@ namespace IncrementalGame.Presentation
             Panel(new Rect(890, 780, 710, 120), new Color(0.04f, 0.065f, 0.09f));
             Label(28, 802, 690, 50, _message, _body);
             Label(940, 800, 620, 30, Editing ? "位置は20px刻み。重なり・盤面外は禁止。" : RecipeMode ? "R：弾の並び　B：配置　左クリック：一発" : "紫 → 緑で +4。反射も組み合わせると +6。", _small);
-            Label(940, 838, 610, 40, $"{(RecipeMode ? RecipeVersion : GameVersion)}  /  {BuildMetadata.CommitHash}\nSeed 20260828", _small);
+            Label(940, 836, 610, 52, $"{(RecipeMode ? RecipeVersion : GameVersion)}  /  {BuildMetadata.CommitHash}\nSeed 20260828", _small);
             if (Editing && Button(new Rect(38, 714, 214, 32), "配置を保存")) { SaveLayout(); _blockedUntilFrame = Time.frameCount + 1; }
             if (RecipeEditing) DrawRecipeEditor();
             GUI.matrix = oldMatrix;
@@ -346,10 +347,56 @@ namespace IncrementalGame.Presentation
             _small = new GUIStyle(_body) { fontSize = 18, normal = { textColor = new Color(0.62f, 0.73f, 0.79f) } };
             _button = new GUIStyle(GUI.skin.button) { font = _font, fontSize = 22, fontStyle = FontStyle.Bold };
             _centerStyle = new GUIStyle(_title) { alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(0.04f, 0.08f, 0.1f) } };
+            if (RecipeMode)
+            {
+                _body.fontSize = RecipeUiText.BodySize; _title.fontSize = RecipeUiText.TitleSize;
+                _big.fontSize = RecipeUiText.GoldSize; _small.fontSize = RecipeUiText.SmallSize;
+                _button.fontSize = RecipeUiText.ButtonSize; _button.fontStyle = FontStyle.Normal;
+                _button.wordWrap = true; _button.padding = new RectOffset(10, 10, 4, 4);
+                _centerStyle.fontSize = RecipeUiText.TitleSize;
+                foreach (var style in new[] { _body, _title, _big, _small, _centerStyle })
+                { style.padding = new RectOffset(); style.margin = new RectOffset(); style.contentOffset = Vector2.zero; }
+            }
         }
         private static void Panel(Rect rect, Color color) { var old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = old; }
-        private static void Label(float x, float y, float w, float h, string text, GUIStyle style) => GUI.Label(new Rect(x, y, w, h), text, style);
-        private bool Button(Rect rect, string text) => GUI.Button(rect, text, _button);
+        private readonly Dictionary<GUIStyle, GUIStyle> _pixelStyles = new Dictionary<GUIStyle, GUIStyle>();
+        private readonly List<string> _uiOverflows = new List<string>();
+        public IReadOnlyList<string> UiOverflows => _uiOverflows;
+        private float _textScale;
+        private GUIStyle ScreenTextStyle(GUIStyle source, float scale)
+        {
+            if (!Mathf.Approximately(scale, _textScale)) { _pixelStyles.Clear(); _textScale = scale; }
+            if (!_pixelStyles.TryGetValue(source, out var result))
+            { result = RecipeUiText.PixelStyle(source, scale); _pixelStyles.Add(source, result); }
+            return result;
+        }
+        private void CheckTextFits(Rect rect, string text, GUIStyle style)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            var required = style.CalcHeight(new GUIContent(text), rect.width);
+            if (required > rect.height + 1) _uiOverflows.Add($"{text.Replace('\n', ' ')} requires {required:0.0}px, has {rect.height:0.0}px");
+        }
+        private void Label(float x, float y, float w, float h, string text, GUIStyle style)
+        {
+            var rect = new Rect(x, y, w, h);
+            if (!RecipeMode) { GUI.Label(rect, text, style); return; }
+            var matrix = GUI.matrix;
+            var pixelRect = RecipeUiText.PixelRect(rect, matrix);
+            var pixelStyle = ScreenTextStyle(style, matrix.m00);
+            GUI.matrix = Matrix4x4.identity;
+            CheckTextFits(pixelRect, text, pixelStyle); GUI.Label(pixelRect, text, pixelStyle);
+            GUI.matrix = matrix;
+        }
+        private bool Button(Rect rect, string text)
+        {
+            if (!RecipeMode) return GUI.Button(rect, text, _button);
+            var matrix = GUI.matrix;
+            var pixelRect = RecipeUiText.PixelRect(rect, matrix);
+            var style = ScreenTextStyle(_button, matrix.m00);
+            GUI.matrix = Matrix4x4.identity;
+            CheckTextFits(pixelRect, text, style); var clicked = GUI.Button(pixelRect, text, style);
+            GUI.matrix = matrix; return clicked;
+        }
 
         [Serializable] private sealed class SavedLayout { public int version = 1; public List<SavedPiece> pieces = new List<SavedPiece>(); }
         [Serializable] private sealed class SavedPiece { public int id; public double x, y, angle; }

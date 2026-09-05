@@ -37,12 +37,14 @@ namespace IncrementalGame.Editor
             var oldName = PlayerSettings.productName;
             var oldVersion = PlayerSettings.bundleVersion;
             var oldCompany = PlayerSettings.companyName;
+            var oldWidth = PlayerSettings.defaultScreenWidth; var oldHeight = PlayerSettings.defaultScreenHeight;
+            var oldMode = PlayerSettings.fullScreenMode; var oldResizable = PlayerSettings.resizableWindow;
             try
             {
                 PlayerSettings.productName = "One Board Recipe Lab";
                 PlayerSettings.companyName = "KOSEI HAMAYA";
                 PlayerSettings.bundleVersion = FreePlacementController.RecipeVersion;
-                PlayerSettings.defaultScreenWidth = 1600; PlayerSettings.defaultScreenHeight = 900;
+                PlayerSettings.defaultScreenWidth = 1920; PlayerSettings.defaultScreenHeight = 1080;
                 PlayerSettings.fullScreenMode = FullScreenMode.Windowed; PlayerSettings.resizableWindow = true;
                 Prototype0Build.WriteBuildMetadata();
                 Directory.CreateDirectory(Path.GetDirectoryName(output));
@@ -58,6 +60,9 @@ namespace IncrementalGame.Editor
             {
                 PlayerSettings.productName = oldName; PlayerSettings.bundleVersion = oldVersion;
                 PlayerSettings.companyName = oldCompany; AssetDatabase.SaveAssets();
+                PlayerSettings.defaultScreenWidth = oldWidth; PlayerSettings.defaultScreenHeight = oldHeight;
+                PlayerSettings.fullScreenMode = oldMode; PlayerSettings.resizableWindow = oldResizable;
+                AssetDatabase.SaveAssets();
             }
         }
     }
