@@ -9,6 +9,52 @@ namespace IncrementalGame.Tests.PlayMode
 {
     public sealed class MomentumPlayModeTests
     {
+        [UnityTest] public IEnumerator ClearPanelAdvancesRetriesAndProtectsFinalStageAndClickThrough()
+        {
+            var root=new GameObject("Clear panel fixture"); root.SetActive(false);
+            var cameraObj=new GameObject("Camera"); cameraObj.transform.SetParent(root.transform);
+            cameraObj.AddComponent<Camera>().orthographic=true;
+            var controller=root.AddComponent<MomentumLabController>(); controller.PersistenceEnabled=false;
+            try
+            {
+                root.SetActive(true); yield return null; yield return null;
+                var sim=controller.Simulation;
+                Assert.That(controller.ClearPanelVisible,Is.False);
+                Assert.That(controller.ContinueFromClear(true),Is.False);
+                for(var stage=0;stage<3;stage++)
+                {
+                    Assert.That(sim.Stage,Is.EqualTo(stage));
+                    sim.TryFire(sim.ZonePosition);
+                    foreach(var target in sim.Targets) target.Hp=0;
+                    controller.RecallVolley();
+                    Assert.That(controller.ClearPanelVisible,Is.True);
+                    Assert.That(controller.CanAdvanceFromClear,Is.EqualTo(stage<2));
+                    var gold=sim.Gold; var mastery=sim.Progress.masteryMask;
+                    controller.SetEditing(true); Assert.That(controller.ClearPanelVisible,Is.False);
+                    Assert.That(controller.ContinueFromClear(false),Is.False);
+                    controller.SetEditing(false);
+                    Assert.That(controller.ContinueFromClear(false),Is.True);
+                    Assert.That(sim.Stage,Is.EqualTo(stage)); Assert.That(sim.RemainingTargets,Is.EqualTo(12));
+                    Assert.That(sim.ChallengeMagazines,Is.Zero); Assert.That(sim.Gold,Is.EqualTo(gold));
+                    Assert.That(sim.Progress.masteryMask,Is.EqualTo(mastery));
+                    Assert.That(controller.ClearPanelVisible,Is.False);
+                    Assert.That(controller.TryFire(new SimVector2(920,450)),Is.False,"Result click must not shoot into restarted stage");
+                    sim.TryFire(sim.ZonePosition);
+                    foreach(var target in sim.Targets) target.Hp=0;
+                    controller.RecallVolley();
+                    Assert.That(controller.ContinueFromClear(true),Is.EqualTo(stage<2));
+                    if(stage<2)
+                    {
+                        Assert.That(sim.RemainingTargets,Is.EqualTo(12));
+                        Assert.That(controller.ContinueFromClear(true),Is.False,"Double activation cannot skip a stage");
+                        Assert.That(controller.TryFire(new SimVector2(700,450)),Is.False);
+                    }
+                    else { Assert.That(sim.Stage,Is.EqualTo(2)); Assert.That(controller.ClearPanelVisible,Is.True); }
+                }
+            }
+            finally { Object.Destroy(root); }
+            yield return null;
+        }
         [Test] public void ProgressJsonRoundTripsOwnershipAndPresets()
         {
             var p=new MomentumProgress { gold=150 };

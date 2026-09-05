@@ -18,7 +18,7 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
-最新試作はChallenge Arsenal 0.5.1-tempo。Master §33（再射撃は§33.5）とMomentum Briefの最新節を参照。3:4盤面・全残弾速度300以下で再射撃・10秒連鎖・2銃・容量20の効果・3Stageと恒久Goldを小さく実装。以下の旧版記述は復元用。旧Build／Tag／Saveを保持し，検証は`.\scripts\momentum.ps1 verify`。
+最新試作はChallenge Arsenal 0.5.2-clear。Master §33（再射撃は§33.5，Clear案内は§33.6）とMomentum Briefの最新節を参照。3:4盤面・全残弾速度300以下で再射撃・10秒連鎖・2銃・容量20の効果・3Stageと恒久Goldを小さく実装。以下の旧版記述は復元用。旧Build／Tag／Saveを保持し，検証は`.\scripts\momentum.ps1 verify`。
 
 最新試作はMomentum Lab（縦長三列Patch 0.4.2-portrait）．Master §32〜§32.2と`docs/AI_MOMENTUM_LAB_IMPLEMENTATION_BRIEF_2026-09-05.md`を参照．中央9:16盤面、左DPS/ログ、右弾倉/強化領域。音とBalance数値は継続、F2でネオン結晶／旧表示を切替。旧横長Layout・Prototype・Build・Tagは保持する．`.\scripts\momentum.ps1 verify`を使う．以下に残るPrototype 1A／2の記述は旧版の復元用．
 

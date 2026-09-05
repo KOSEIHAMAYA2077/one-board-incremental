@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.5.1-tempo";
+        public const string GameVersion = "0.5.2-clear";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -119,7 +119,7 @@ namespace IncrementalGame.Presentation
             if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
             var over = MouseAim(out var aim);
             if (!Simulation.Editing && over && Input.GetMouseButtonDown(0)) TryFire(aim);
-            _aimLine.enabled = over && !Simulation.Editing;
+            _aimLine.enabled = over && !Simulation.Editing && !ClearPanelVisible;
             if (_aimLine.enabled)
             {
                 var dir = (aim - Simulation.Layout.Gun).Normalized;
@@ -265,6 +265,26 @@ namespace IncrementalGame.Presentation
             yield return new WaitForSecondsRealtime(1); yield return new WaitForEndOfFrame();
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;
+            if (Array.IndexOf(args, "-momentum-clear") >= 0)
+            {
+                // Isolated presentation fixture: capture success screens without touching saves.
+                var clearOverflow = ""; var clearOk = true;
+                for(var stage=0;stage<3;stage++)
+                {
+                    clearOk &= BeginChallenge(stage);
+                    Simulation.TryFire(Simulation.ZonePosition);
+                    foreach(var target in Simulation.Targets) target.Hp=0;
+                    RecallVolley();
+                    yield return null; yield return null; yield return new WaitForEndOfFrame();
+                    clearOk &= ClearPanelVisible && CanAdvanceFromClear == (stage<2);
+                    clearOverflow += string.Join("\n",_overflows);
+                    ScreenCapture.CaptureScreenshot(Path.Combine(folder,$"clear-stage-{stage+1}.png"));
+                    yield return new WaitForSecondsRealtime(.15f);
+                }
+                File.WriteAllText(Path.Combine(folder,"clear-smoke.txt"),$"ClearStates={clearOk}; Overflow={clearOverflow}");
+                Application.Quit(clearOk && clearOverflow.Length==0 ? 0 : 1);
+                yield break;
+            }
             TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
             var peakBalls=0; var maxFrameMs=0f; var totalFrameMs=0f; var peakCaptured=false;
             if (_stressDiagnostic)

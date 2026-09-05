@@ -8,6 +8,14 @@ namespace IncrementalGame.Presentation
     {
         private readonly Queue<string> _combatFeed = new Queue<string>();
         private GUIStyle _hpLabel;
+        private GUIStyle _clearHeading, _clearText;
+        public bool ClearPanelVisible => Simulation != null && !Simulation.Editing && Simulation.ChallengeState == MomentumChallengeState.Cleared;
+        public bool CanAdvanceFromClear => ClearPanelVisible && Simulation.Stage + 1 < StageNames.Length && Simulation.Stage + 1 <= Simulation.Progress.highestStage;
+        public bool ContinueFromClear(bool next)
+        {
+            if (!ClearPanelVisible || (next && !CanAdvanceFromClear)) return false;
+            return BeginChallenge(Simulation.Stage + (next ? 1 : 0));
+        }
         private static readonly string[] StageNames = { "01 / PRISM GARDEN", "02 / ARMOR VAULT", "03 / CRYSTAL SWARM" };
         private static string ModName(MomentumMod mod) => mod == MomentumMod.Power ? "威力 +25%" : mod == MomentumMod.Speed ? "初速 +20%" : mod == MomentumMod.Pierce ? "抵抗による減速 1/4" : mod == MomentumMod.Split ? "初回命中で二分裂" : mod == MomentumMod.Golden ? "4発ごとに Golden" : mod == MomentumMod.Blast ? "3体目に命中で爆発" : "共鳴 / 威力 +20%";
         private void RecordCombatFeed(MomentumEvent e)
@@ -29,7 +37,7 @@ namespace IncrementalGame.Presentation
             if (Event.current.type == EventType.Repaint) _overflows.Clear();
             var prior = GUI.matrix; var r = _camera.pixelRect;
             GUI.matrix = Matrix4x4.TRS(new Vector3(r.x, Screen.height-r.yMax,0),Quaternion.identity,Vector3.one*(r.width/1600));
-            DrawTelemetry(); DrawLoadout(); DrawStageLabels();
+            DrawTelemetry(); DrawLoadout(); DrawStageLabels(); DrawClearPanel();
             GUI.matrix = prior;
         }
         private void DrawTelemetry()
@@ -102,6 +110,27 @@ namespace IncrementalGame.Presentation
             }
             var z=Simulation.ZonePosition; Label((float)z.X-60,(float)z.Y-14,120,28,"速度 ×2",_targetLabel);
             Label(500,862,600,29,"クリック：一斉射 / Space：回収 / オレンジの的は高抵抗",_targetLabel);
+        }
+        private void DrawClearPanel()
+        {
+            if (!ClearPanelVisible) return;
+            if (_clearHeading == null)
+            {
+                _clearHeading = new GUIStyle(_gold) { fontSize = 48, alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(.4f,1f,.82f) } };
+                _clearText = new GUIStyle(_body) { alignment = TextAnchor.MiddleCenter };
+            }
+            var sim = Simulation;
+            Panel(new Rect(500,50,600,800),new Color(.015f,.03f,.05f,.68f));
+            Panel(new Rect(544,270,512,342),new Color(.2f,.75f,.66f));
+            Panel(new Rect(547,273,506,336),new Color(.045f,.09f,.12f));
+            Label(568,289,464,68,"CLEAR!",_clearHeading);
+            Label(568,364,464,32,StageNames[sim.Stage],_clearText);
+            Label(568,407,464,50,$"{sim.ChallengeMagazines} マガジンで全破壊 / 獲得 {sim.ChallengeGold} G\n"+(sim.ChallengeMagazines==1?"1マガジン達成！ 特殊効果を開放済み":"獲得Goldと開放済みの強化は保持されます"),_clearText);
+            Label(568,468,464,28,CanAdvanceFromClear?"次のステージへ進もう":"全3ステージ達成！ 再挑戦や構成変更を楽しもう",_targetLabel);
+            var enabled = _focus && Time.frameCount > _blockedFrame;
+            if(ActionButton(new Rect(570,515,220,56),CanAdvanceFromClear?"次へ →":"全ステージ達成",enabled && CanAdvanceFromClear)) ContinueFromClear(true);
+            if(ActionButton(new Rect(810,515,220,56),"もう一度",enabled && ClearPanelVisible)) ContinueFromClear(false);
+            Label(568,578,464,25,"左右のパネルで強化・ステージ選択もできます",_targetLabel);
         }
     }
 }
