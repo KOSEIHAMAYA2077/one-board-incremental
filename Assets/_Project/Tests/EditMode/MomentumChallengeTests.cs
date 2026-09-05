@@ -23,19 +23,96 @@ namespace IncrementalGame.Tests.EditMode
                 }
             }
         }
-        [Test] public void ReloadOverlapsFlightAndAllDescendantsExpireTogether()
+        [Test] public void ReloadOverlapsFastFlightAndAllDescendantsExpireTogether()
         {
             var sim=new MomentumSimulation(progress:Full());
             foreach(var t in sim.Targets) t.Hp=1000000;
             Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
             Run(sim,90);
-            sim.Balls.Add(new MomentumBall { Id=9999, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-100), ExpiresAt=10, Generation=5 });
+            sim.Balls.Add(new MomentumBall { Id=9999, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-301), ExpiresAt=10, Generation=5 });
             Assert.That(sim.ReloadRemaining,Is.Zero);
             Assert.That(sim.Ready,Is.False);
             Assert.That(sim.TryFire(sim.ZonePosition),Is.False);
             Run(sim,520);
             Assert.That(sim.Balls,Is.Empty); Assert.That(sim.FiredCount,Is.EqualTo(6));
             Assert.That(sim.Ready,Is.True);
+        }
+        [Test] public void RefireUsesFastestLivingDescendantAndIncludesThreshold()
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress());
+            sim.Balls.Add(new MomentumBall { Velocity=new SimVector2(300,0), Generation=5 });
+            Assert.That(sim.Ready,Is.True);
+            var fast=new MomentumBall { Velocity=new SimVector2(0,300.01), Generation=9 };
+            sim.Balls.Add(fast);
+            Assert.That(sim.Ready,Is.False,"One fast descendant blocks, even if the average is below 300");
+            fast.Alive=false;
+            Assert.That(sim.Ready,Is.True);
+            sim.SetEditing(true); Assert.That(sim.Ready,Is.False);
+        }
+        [Test] public void SlowTailDoesNotSkipReloadOrQueueRejectedClicks()
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress());
+            sim.TryFire(sim.ZonePosition); Run(sim,40);
+            sim.Balls.Clear();
+            sim.Balls.Add(new MomentumBall { Position=new SimVector2(800,780), Velocity=new SimVector2(0,-100), Boosted=true });
+            Assert.That(sim.ReloadRemaining,Is.GreaterThan(0));
+            Assert.That(sim.TryFire(sim.ZonePosition),Is.False);
+            Run(sim,50);
+            Assert.That(sim.Ready,Is.True); Assert.That(sim.FiredCount,Is.EqualTo(6));
+        }
+        [Test] public void NewMagazineKeepsOldTailAndIndependentExpiry()
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress());
+            foreach(var t in sim.Targets) t.Hp=1000000;
+            sim.TryFire(sim.ZonePosition); Run(sim,90); sim.Balls.Clear();
+            var old=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-300), Boosted=true, ExpiresAt=10 };
+            sim.Balls.Add(old);
+            var newExpiry=sim.Time+10;
+            Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
+            Assert.That(sim.Balls.Contains(old),Is.True); Assert.That(old.ExpiresAt,Is.EqualTo(10));
+            Assert.That(sim.Balls.Find(b=>b.MagazineId==2).ExpiresAt,Is.EqualTo(newExpiry));
+            Assert.That(sim.ChallengeMagazines,Is.EqualTo(2));
+            Run(sim,660); Assert.That(sim.Balls,Is.Empty); Assert.That(sim.FiredCount,Is.EqualTo(12));
+        }
+        [TestCase(1022, 0, 1024)]
+        [TestCase(1023, 1, 1023)]
+        public void OverlappingMagazinesKeepIndependentSplitBudgets(int oldCount,int suppressed,int finalCount)
+        {
+            var sim=new MomentumSimulation(progress:Full());
+            sim.TryFire(sim.ZonePosition); Run(sim,90); sim.Balls.Clear(); sim.Targets.Clear(); sim.Obstacles.Clear();
+            sim.Targets.Add(new MomentumTarget { Id=1, Position=new SimVector2(800,300), Hp=1000000 });
+            var old=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,335), Velocity=new SimVector2(0,-300), Mods=MomentumMod.Split, ResistanceScale=.25, Boosted=true, ExpiresAt=10 };
+            sim.Balls.Add(old);
+            var counts=(System.Collections.Generic.Dictionary<int,int>)typeof(MomentumSimulation)
+                .GetField("_spawnedByMagazine",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(sim);
+            counts[1]=oldCount;
+            Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
+            var before=sim.SuppressedSplits; sim.Tick(1.0/60);
+            Assert.That(sim.SuppressedSplits-before,Is.EqualTo(suppressed));
+            Assert.That(counts[1],Is.EqualTo(finalCount)); Assert.That(counts[2],Is.EqualTo(1));
+            foreach(var b in sim.Balls) if(b.MagazineId==1) Assert.That(b.ExpiresAt,Is.EqualTo(10));
+        }
+        [TestCase(0, 250)] [TestCase(1, 238)]
+        public void NextMagazineReservesRoomUnderGlobalCap(int gun,int tailCount)
+        {
+            var p=Full(); p.gun=gun;
+            var sim=new MomentumSimulation(progress:p);
+            for(var i=0;i<tailCount+1;i++) sim.Balls.Add(new MomentumBall { Id=1000+i, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-100), Boosted=true });
+            Assert.That(sim.Ready,Is.False);
+            sim.Balls.RemoveAt(0); Assert.That(sim.Ready,Is.True);
+            Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
+            for(var i=0;i<90;i++) { sim.Tick(1.0/60); Assert.That(sim.Balls.Count+sim.RemainingInBurst,Is.LessThanOrEqualTo(256)); }
+        }
+        [Test] public void ReacceleratedTailBlocksAgainAndAllDeadTargetsCannotConsumeMagazine()
+        {
+            var sim=new MomentumSimulation(progress:new MomentumProgress());
+            var ball=new MomentumBall { Position=sim.ZonePosition, Velocity=new SimVector2(0,-300) };
+            sim.Balls.Add(ball); Assert.That(sim.Ready,Is.True);
+            sim.Tick(1.0/60);
+            Assert.That(ball.Speed,Is.GreaterThan(300)); Assert.That(sim.Ready,Is.False);
+            ball.Velocity=new SimVector2(0,-100);
+            foreach(var t in sim.Targets) t.Hp=0;
+            Assert.That(sim.TryFire(sim.ZonePosition),Is.False); Assert.That(sim.ChallengeMagazines,Is.Zero);
         }
         [Test] public void RecallCancelsUnemittedShotsWithoutRefundOrFakeReward()
         {

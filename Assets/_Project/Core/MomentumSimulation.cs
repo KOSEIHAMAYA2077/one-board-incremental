@@ -99,7 +99,7 @@ namespace IncrementalGame.Core
         public IReadOnlyList<MomentumAmmo> Magazine => Array.AsReadOnly(_magazine);
         public bool Bursting => _firing != null;
         public int RemainingInBurst => _firing == null ? 0 : _firing.Length - _nextSlot;
-        public bool Ready => !Editing && !Bursting && Time >= _readyAt && (Progress == null || Balls.Count == 0 && ChallengeState == MomentumChallengeState.Active && ChallengeMagazines < ChallengeLimit);
+        public bool Ready => !Editing && !Bursting && Time >= _readyAt && (Progress == null || CanStartMagazine);
         public double ReloadRemaining => Math.Max(0, _readyAt - Time);
         public SimVector2 ZonePosition => Layout.ZoneAt(Time);
 

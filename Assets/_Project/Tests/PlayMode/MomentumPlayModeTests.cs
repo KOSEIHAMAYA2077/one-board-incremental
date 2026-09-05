@@ -76,6 +76,18 @@ namespace IncrementalGame.Tests.PlayMode
                 controller.StepSimulation(1.0 / 60); Assert.That(controller.Simulation.Time, Is.EqualTo(time));
                 controller.SetEditing(false); Assert.That(controller.TryFire(new SimVector2(940, 200)), Is.False);
                 Assert.That(root.GetComponentsInChildren<LineRenderer>().Length, Is.GreaterThan(8));
+                for(var i=0;i<50;i++) controller.StepSimulation(1.0/60);
+                // Let the existing pause-close click guard elapse in actual presentation frames.
+                yield return null; yield return null;
+                var sim=controller.Simulation;
+                sim.Balls.Clear();
+                var tail=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-300), ExpiresAt=10, Boosted=true };
+                sim.Balls.Add(tail);
+                Assert.That(controller.TryFire(new SimVector2(200,400)),Is.False,"UI still must not fire when READY with a tail");
+                Assert.That(controller.TryFire(new SimVector2(940,200)),Is.True);
+                Assert.That(sim.Balls.Contains(tail),Is.True); Assert.That(sim.ChallengeMagazines,Is.EqualTo(2));
+                controller.StepSimulation(1.0/60);
+                Assert.That(controller.NeonView.FlightCount,Is.EqualTo(sim.Balls.Count));
             }
             finally { Object.Destroy(root); }
             yield return null;

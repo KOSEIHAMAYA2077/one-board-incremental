@@ -13,11 +13,21 @@ namespace IncrementalGame.Core
         public int ChallengeGold { get; private set; }
         public int RemainingTargets => Targets.FindAll(t => t.Alive).Count;
         public bool CanConfigure => Progress != null && !Bursting && Balls.Count == 0;
+        public const double RefireSpeed = 300;
+        public double FastestBallSpeed
+        {
+            get { var speed = 0.0; foreach (var ball in Balls) if (ball.Alive) speed = Math.Max(speed, ball.Speed); return speed; }
+        }
+        public bool HasRoomForMagazine => Progress != null && Balls.Count + (Progress.gun == 0 ? 6 : 18) <= 256;
+        private bool CanStartMagazine => ChallengeState == MomentumChallengeState.Active
+            && ChallengeMagazines < ChallengeLimit && RemainingTargets > 0
+            && FastestBallSpeed <= RefireSpeed && HasRoomForMagazine;
         private int _volleyGun;
         private MomentumMod _volleyMods;
         private double _volleyPower;
         private double _volleyExpires;
-        private int _volleySpawned;
+        private readonly Dictionary<int, int> _spawnedByMagazine = new Dictionary<int, int>();
+        private int SpawnedInMagazine(int id) => _spawnedByMagazine.TryGetValue(id, out var count) ? count : 0;
         public int SuppressedSplits { get; private set; }
         public double FlightRemaining => Math.Max(0, _volleyExpires - Time);
         private readonly List<MomentumBall> _children = new List<MomentumBall>();
@@ -27,6 +37,7 @@ namespace IncrementalGame.Core
             Stage = stage; ChallengeMagazines = 0; ChallengeGold = 0;
             ChallengeLimit = Progress.MagazineLimit; ChallengeState = MomentumChallengeState.Active;
             _readyAt = Time;
+            _spawnedByMagazine.Clear();
             foreach (var t in Targets)
             {
                 t.Hp = 0; t.GoldenMarked = false; t.RadiusScale = .75;
@@ -43,14 +54,16 @@ namespace IncrementalGame.Core
         {
             _volleyGun = Progress.gun; _volleyMods = (MomentumMod)Progress.equippedMods;
             _volleyPower = 1 + Progress.powerLevel * .1;
-            _volleyExpires = Time + 10; _volleySpawned = 0;
+            _volleyExpires = Time + 10;
+            _spawnedByMagazine[MagazineCount + 1] = 0;
             _firing = new MomentumAmmo[_volleyGun == 0 ? 6 : 18];
             ChallengeMagazines++;
         }
         private void ConfigureBall(MomentumBall ball, int number)
         {
             ball.Mods = _volleyMods;
-            ball.ExpiresAt = _volleyExpires; _volleySpawned++;
+            ball.ExpiresAt = _volleyExpires;
+            _spawnedByMagazine[ball.MagazineId] = SpawnedInMagazine(ball.MagazineId) + 1;
             ball.Radius = _volleyGun == 0 ? 9 : 5;
             ball.DamageScale = (_volleyGun == 0 ? 48.0 : 17.0) / 40 * _volleyPower;
             if ((ball.Mods & MomentumMod.Power) != 0) ball.DamageScale *= 1.25;
@@ -103,7 +116,7 @@ namespace IncrementalGame.Core
             }
             if (!ball.Alive || (ball.Mods & MomentumMod.Split) == 0 || ball.HasSplit) return;
             // No generation limit. Safety caps preserve the parent and its future damage.
-            if (_volleySpawned + 2 > 1024 || Balls.Count + _children.Count + RemainingInBurst + 1 > 256)
+            if (SpawnedInMagazine(ball.MagazineId) + RemainingInBurstFor(ball.MagazineId) + 2 > 1024 || Balls.Count + _children.Count + RemainingInBurst + 1 > 256)
             { SuppressedSplits++; return; }
             ball.HasSplit = true;
             for (var i = 0; i < 2; i++)
@@ -114,10 +127,11 @@ namespace IncrementalGame.Core
                     Mods = ball.Mods, Golden = ball.Golden, Generation = ball.Generation + 1, Boosted = ball.Boosted, ExpiresAt = ball.ExpiresAt };
                 foreach (var id in ball.Exiting) child.Exiting.Add(id);
                 _children.Add(child);
-                _volleySpawned++;
+                _spawnedByMagazine[ball.MagazineId] = SpawnedInMagazine(ball.MagazineId) + 1;
             }
             ball.Alive = false;
             Events.Add(new MomentumEvent("split", ball.Position, 2));
         }
+        private int RemainingInBurstFor(int magazineId) => magazineId == MagazineCount ? RemainingInBurst : 0;
     }
 }
