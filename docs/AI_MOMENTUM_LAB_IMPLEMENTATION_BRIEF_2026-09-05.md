@@ -18,7 +18,11 @@ Master v0.6.0 §32が今回のGame Logic正本．旧章との競合は§32を優
 - マガジンをVersion付きLocal JSON＋日時履歴へ保存．セッションLogは個別File．Goldとランダム盤面は起動ごとに初期化し，Seedを表示する．送信なし．
 - 新Scene MomentumLab.unity，新実行File OneBoardMomentumLab.exe，製品名One Board Momentum Lab．Artifacts/Momentum/<日時>/に検証・Build・ZIP・SHAを保存．
 
-## 今回入れない
+## 表示比較Patch 0.4.1-neon
+
+User承認のMaster §32.1に従い、ネオン発光と3D結晶Meshを追加する。ゲーム挙動・数値・音は変更しない。F2で従来表示と比較できる。現時点の対象Buildは0.4.1-neonで、上記0.4.0のGame LogicとSave互換を保持する。外部購入Assetは使わず、生成Meshと専用Shaderで試す。検証は旧Test一式、描画切替の論理不変、Mesh奥行き、演出消滅、Windows Build、FHD画像確認。
+
+## 今回入れない（継続）
 
 ゴールド／カオス等の追加ゾーン，爆発・分裂・裂傷弾，銃の購入／強化，Material，Core，手動配置．これらはメモに残すだけ．
 

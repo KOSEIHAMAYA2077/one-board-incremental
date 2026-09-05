@@ -9,7 +9,10 @@ namespace IncrementalGame.Presentation
 {
     public sealed class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.4.0-momentum";
+        public const string GameVersion = "0.4.1-neon";
+        public bool NeonEnabled { get; private set; } = true;
+        public MomentumNeonView NeonView { get; private set; }
+        private Renderer[] _legacyRenderers;
         public MomentumSimulation Simulation { get; private set; }
         public bool PersistenceEnabled { get; set; } = true;
         private Camera _camera; private PrototypeAudio _audio;
@@ -38,6 +41,9 @@ namespace IncrementalGame.Presentation
             _camera = GetComponentInChildren<Camera>(); _audio = GetComponent<PrototypeAudio>();
             Time.fixedDeltaTime = 1f / 60; Application.targetFrameRate = 120;
             LoadMagazine(); BuildBoard();
+            _legacyRenderers = GetComponentsInChildren<Renderer>();
+            var neon = new GameObject("Neon crystal presentation"); neon.transform.SetParent(transform, false);
+            NeonView = neon.AddComponent<MomentumNeonView>(); NeonView.Initialize(Simulation);
             _logPath = Path.Combine(Application.persistentDataPath, "sessions", _session + ".log");
             Log($"start version={GameVersion} commit={BuildMetadata.CommitHash} seed={Simulation.Seed}");
             SyncViews();
@@ -82,6 +88,13 @@ namespace IncrementalGame.Presentation
             if (!editing) SaveMagazine();
             Log(editing ? "edit_started" : "edit_finished");
         }
+        public void SetNeonEnabled(bool enabled)
+        {
+            NeonEnabled = enabled;
+            NeonView.gameObject.SetActive(enabled);
+            foreach (var renderer in _legacyRenderers) renderer.enabled = true;
+            SyncViews();
+        }
         public bool TryFire(SimVector2 aim)
         {
             if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.TryFire(aim)) return false;
@@ -98,6 +111,7 @@ namespace IncrementalGame.Presentation
         private void Update()
         {
             if (!_focus) return;
+            if (Input.GetKeyDown(KeyCode.F2)) SetNeonEnabled(!NeonEnabled);
             if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
             var over = MouseAim(out var aim);
             if (!Simulation.Editing && over && Input.GetMouseButtonDown(0)) TryFire(aim);
@@ -105,6 +119,7 @@ namespace IncrementalGame.Presentation
             if (_aimLine.enabled)
             {
                 var dir = (aim - MomentumRules.Gun).Normalized;
+                NeonView.SetAim(dir);
                 _aimLine.positionCount = 2; _aimLine.SetPosition(0, LogicalSpace.ToWorld(MomentumRules.Gun));
                 _aimLine.SetPosition(1, LogicalSpace.ToWorld(MomentumRules.Gun + dir * 150));
                 _gunBarrel.transform.position = LogicalSpace.ToWorld(MomentumRules.Gun + dir * 16);
@@ -126,6 +141,7 @@ namespace IncrementalGame.Presentation
             }
             for (var i = _popups.Count - 1; i >= 0; i--)
             { _popups[i].Time -= seconds; if (_popups[i].Time <= 0) _popups.RemoveAt(i); }
+            NeonView.Advance(Simulation, seconds);
             SyncViews();
         }
         private void SyncViews()
@@ -150,6 +166,7 @@ namespace IncrementalGame.Presentation
                     _balls.Add(ball.Id, view);
                 }
                 view.Head.transform.position = LogicalSpace.ToWorld(ball.Position);
+                view.Head.enabled = !NeonEnabled; view.Trail.enabled = !NeonEnabled;
                 var color = ball.Boosted ? Color.Lerp(AmmoColor(ball.Ammo), Color.white, .5f) : AmmoColor(ball.Ammo);
                 view.Head.color = color; view.Trail.startColor = new Color(color.r, color.g, color.b, .15f); view.Trail.endColor = color;
                 view.Points.Enqueue(LogicalSpace.ToWorld(ball.Position)); while (view.Points.Count > 18) view.Points.Dequeue();
@@ -158,6 +175,10 @@ namespace IncrementalGame.Presentation
             var remove = new List<int>();
             foreach (var item in _balls) if (!alive.Contains(item.Key)) { Destroy(item.Value.Head.gameObject); Destroy(item.Value.Trail.gameObject); remove.Add(item.Key); }
             foreach (var id in remove) _balls.Remove(id);
+            NeonView.Sync(Simulation);
+            if (NeonEnabled)
+                foreach (var renderer in _legacyRenderers)
+                    if (renderer != _aimLine) renderer.enabled = false;
         }
         private static string AmmoName(MomentumAmmo ammo) => ammo == MomentumAmmo.Normal ? "通常" : "貫通";
         private void EnsureStyles()
@@ -179,7 +200,7 @@ namespace IncrementalGame.Presentation
             GUI.matrix = Matrix4x4.TRS(new Vector3(r.x, Screen.height - r.yMax, 0), Quaternion.identity, Vector3.one * (r.width / 1600));
             Panel(new Rect(0, 0, 1600, 100), new Color(.04f, .06f, .085f));
             Label(28, 18, 290, 36, "MOMENTUM LAB", _title);
-            Label(28, 60, 290, 28, "速度を使い切るマガジン", _small);
+            Label(28, 60, 290, 28, NeonEnabled ? "NEON / CRYSTAL　立体描画試作" : "CLASSIC　旧表示との比較", _small);
             for (var i = 0; i < 3; i++)
             {
                 var x = 350 + i * 165;
@@ -216,7 +237,7 @@ namespace IncrementalGame.Presentation
                     pop.Kind == "hit" ? $"−{pop.Amount:0}" : pop.Kind == "destroy" ? $"+{pop.Amount:0} Gold" : "加速 ×2", _body);
             Panel(new Rect(0, 780, 1600, 120), new Color(.04f, .06f, .085f));
             Label(30, 802, 850, 65, _message, _body);
-            Label(1020, 796, 540, 28, "クリック：三発　R：弾倉編集／停止", _small);
+            Label(1020, 796, 540, 28, "クリック：三発　R：弾倉　F2：見た目切替", _small);
             Label(1020, 835, 540, 53, $"{GameVersion} / {BuildMetadata.CommitHash}\nSeed {Simulation.Seed}", _small);
             if (Simulation.Editing) DrawEditor();
             GUI.matrix = prior;
@@ -307,12 +328,14 @@ namespace IncrementalGame.Presentation
             for (var i = 0; i < 35; i++) StepSimulation(1.0 / 60);
             var three = Simulation.FiredCount == 3; var boost = Simulation.BoostCount;
             CaptureBoard(Path.Combine(folder, "01-flight-board.png"));
+            yield return new WaitForEndOfFrame();
+            ScreenCapture.CaptureScreenshot(Path.Combine(folder, "02-full-ui.png"));
             SetEditing(true); var before = Simulation.Time; StepSimulation(1.0 / 60); var paused = before == Simulation.Time;
             yield return new WaitForEndOfFrame(); var editorOverflow = string.Join("\n", _overflows);
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
             File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
-            Application.Quit(three && boost > 0 && paused && Simulation.Balls.Count == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
+            Application.Quit(three && boost > 0 && paused && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private void CaptureBoard(string path)
         {
