@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace IncrementalGame.Presentation
 {
-    public sealed class FreePlacementController : MonoBehaviour
+    public sealed partial class FreePlacementController : MonoBehaviour
     {
         public const string GameVersion = "0.2.0-placement";
         private readonly List<BoardPieceView> _views = new List<BoardPieceView>();
@@ -39,13 +39,13 @@ namespace IncrementalGame.Presentation
         public bool Editing { get; private set; }
         public bool PersistenceEnabled { get; set; } = true;
         public double Gold => _gold;
-        public int ActiveShotCount => _flights.Count;
+        public int ActiveShotCount => _flights.Count + RecipeActiveCount;
         public double SimulatedSeconds => _seconds;
         public IReadOnlyList<BoardPiece> Pieces => _pieces;
 
         private void Awake()
         {
-            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0)
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0 || Array.IndexOf(Environment.GetCommandLineArgs(), "-recipe-capture") >= 0)
             { PersistenceEnabled = false; Application.runInBackground = true; }
             _camera = GetComponentInChildren<Camera>();
             if (_camera == null) _camera = Camera.main;
@@ -54,8 +54,9 @@ namespace IncrementalGame.Presentation
             _pieces.AddRange(FreePlacementBoard.CreateInitial());
             LoadLayout();
             BuildBoard();
+            if (RecipeMode) { LoadRecipe(); _message = "Rで五発を編集。貫通は直列、分裂は扇状の配置を試そう。"; }
             _logPath = Path.Combine(Application.persistentDataPath, "placement-sessions", _session + ".log");
-            Log($"start version={GameVersion} commit={BuildMetadata.CommitHash} seed=20260828");
+            Log($"start version={(RecipeMode ? RecipeVersion : GameVersion)} commit={BuildMetadata.CommitHash} seed=20260828");
         }
 
         private void BuildBoard()
@@ -102,6 +103,7 @@ namespace IncrementalGame.Presentation
 
         public void SetEditing(bool editing)
         {
+            if (RecipeEditing) SetRecipeEditing(false);
             if (editing == Editing) return;
             if (_dragging) EndDrag(false);
             Editing = editing;
@@ -109,6 +111,7 @@ namespace IncrementalGame.Presentation
             _grid.gameObject.SetActive(editing);
             if (editing)
             {
+                EndRecipeRuns();
                 // A layout change must not alter the targets encountered by a previously fired shot.
                 foreach (var flight in _flights) { Destroy(flight.Path.gameObject); Destroy(flight.Head.gameObject); }
                 _flights.Clear();
@@ -129,6 +132,13 @@ namespace IncrementalGame.Presentation
         private void Update()
         {
             if (!_hasFocus) return;
+            if (RecipeMode && Input.GetKeyDown(KeyCode.R)) SetRecipeEditing(!RecipeEditing);
+            if (RecipeEditing)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape)) SetRecipeEditing(false);
+                _cone.enabled = _preview.enabled = _normal.enabled = false;
+                return;
+            }
             if (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Tab)) SetEditing(!Editing);
             if (Input.GetKeyDown(KeyCode.Escape) && Editing)
             {
@@ -190,6 +200,7 @@ namespace IncrementalGame.Presentation
 
         public bool TryFire(SimVector2 aim)
         {
+            if (RecipeMode) return TryRecipeFire(aim);
             if (Editing || !_hasFocus || Time.frameCount <= _blockedUntilFrame || !_reload.TryFire()) return false;
             var delta = aim - FreePlacementBoard.Gun;
             var direction = ResolveAim(delta);
@@ -205,6 +216,7 @@ namespace IncrementalGame.Presentation
         private void FixedUpdate() { if (_hasFocus) SimulateTick(Time.fixedDeltaTime); }
         public void SimulateTick(double seconds)
         {
+            if (RecipeMode) { SimulateRecipeTick(seconds); return; }
             if (Editing) return;
             _seconds += seconds;
             if (_reload.Tick(seconds)) _audio?.PlayReady();
@@ -289,11 +301,13 @@ namespace IncrementalGame.Presentation
             var rect = _camera.pixelRect; var scale = rect.width / 1600;
             GUI.matrix = Matrix4x4.TRS(new Vector3(rect.x, Screen.height - rect.yMax, 0), Quaternion.identity, Vector3.one * scale);
             Panel(new Rect(0, 0, 1600, 112), new Color(0.04f, 0.065f, 0.09f));
-            Label(28, 20, 250, 35, "ROUTE LAB", _title);
-            Label(28, 64, 250, 30, "自由配置 / 試作 1A", _small);
+            Label(28, 20, 250, 35, RecipeMode ? "RECIPE LAB" : "ROUTE LAB", _title);
+            Label(28, 64, 250, 30, RecipeMode ? "五発 × 自由配置 / 試作 2" : "自由配置 / 試作 1A", _small);
+            if (!RecipeMode) {
             Label(310, 24, 750, 35, Editing ? "置いて、回して、経路をつくる。" : "自分の盤面を、一発が走る。", _title);
             Label(310, 66, 700, 26, Editing ? "配置中は時間停止。薄い線は散布なしの参考軌道。" : "左クリックで発射。遠くを狙うほど散布が狭まります。", _small);
             if (Button(new Rect(1270, 28, 280, 56), Editing ? "▶ 撃ってみる [B]" : "✦ 配置する [B]")) SetEditing(!Editing);
+            } else DrawRecipeHeader();
             Panel(new Rect(18, 134, 254, 618), new Color(0.065f, 0.097f, 0.125f));
             Label(38, 155, 220, 28, "獲得した GOLD", _small);
             Label(38, 184, 220, 70, _gold.ToString("0"), _big);
@@ -302,7 +316,7 @@ namespace IncrementalGame.Presentation
             Label(38, 393, 220, 55, "● Collector ×2\n命中で 2 Gold", _small);
             Label(38, 468, 220, 55, "┃ Mirror\n反射後の報酬 ×1.5", _small);
             Label(38, 543, 220, 55, "▰ Amplifier\n通過後の次の報酬 ×2", _small);
-            Label(38, 626, 215, 88, Editing ? "ドラッグ：移動\nQ / E・ホイール：回転\n赤い位置：配置できません" : (_reload.IsReady ? "● 発射できます" : $"装填中 {_reload.RemainingSeconds:0.00} 秒"), _small);
+            Label(38, 626, 215, 88, Editing ? "ドラッグ：移動\nQ / E・ホイール：回転\n赤い位置：配置できません" : RecipeMode ? RecipeStatus : (_reload.IsReady ? "● 発射できます" : $"装填中 {_reload.RemainingSeconds:0.00} 秒"), _small);
             foreach (var view in _views)
             {
                 var p = view.Piece.Position;
@@ -315,9 +329,10 @@ namespace IncrementalGame.Presentation
             Panel(new Rect(0, 780, 730, 120), new Color(0.04f, 0.065f, 0.09f));
             Panel(new Rect(890, 780, 710, 120), new Color(0.04f, 0.065f, 0.09f));
             Label(28, 802, 690, 50, _message, _body);
-            Label(940, 800, 620, 30, Editing ? "位置は20px刻み。重なり・盤面外は禁止。" : "紫 → 緑で +4。反射も組み合わせると +6。", _small);
-            Label(940, 838, 610, 40, $"{GameVersion}  /  {BuildMetadata.CommitHash}\nSeed 20260828", _small);
+            Label(940, 800, 620, 30, Editing ? "位置は20px刻み。重なり・盤面外は禁止。" : RecipeMode ? "R：弾の並び　B：配置　左クリック：一発" : "紫 → 緑で +4。反射も組み合わせると +6。", _small);
+            Label(940, 838, 610, 40, $"{(RecipeMode ? RecipeVersion : GameVersion)}  /  {BuildMetadata.CommitHash}\nSeed 20260828", _small);
             if (Editing && Button(new Rect(38, 714, 214, 32), "配置を保存")) { SaveLayout(); _blockedUntilFrame = Time.frameCount + 1; }
+            if (RecipeEditing) DrawRecipeEditor();
             GUI.matrix = oldMatrix;
         }
         private GUIStyle _centerStyle;
@@ -385,15 +400,16 @@ namespace IncrementalGame.Presentation
         }
         private void OnApplicationFocus(bool focus)
         {
-            _hasFocus = focus || Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0;
+            _hasFocus = focus || Array.IndexOf(Environment.GetCommandLineArgs(), "-placement-capture") >= 0 || Array.IndexOf(Environment.GetCommandLineArgs(), "-recipe-capture") >= 0;
             if (!focus && _dragging) EndDrag(false);
             _blockedUntilFrame = Time.frameCount + 1;
         }
-        private void OnApplicationQuit() { if (_dragging) EndDrag(false); SaveLayout(); Log($"end shots={_shots} hits={_hits} gold={_gold}"); }
+        private void OnApplicationQuit() { if (_dragging) EndDrag(false); SaveLayout(); if (RecipeMode) SaveRecipe(); Log($"end shots={_shots} hits={_hits} gold={_gold}"); }
 
         // Opt-in standalone diagnostic. Does not load or save the user's layout or session logs.
         private IEnumerator Start()
         {
+            if (RecipeMode) { yield return RecipeDiagnostic(); yield break; }
             var args = Environment.GetCommandLineArgs();
             var flag = Array.IndexOf(args, "-placement-capture");
             if (flag < 0 || flag + 1 >= args.Length) yield break;

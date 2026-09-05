@@ -1,6 +1,12 @@
 # One Board Incremental
 
-## 最新の試作：ROUTE LAB / Prototype 1A
+## 最新の試作：RECIPE LAB / Prototype 2
+
+五発Recipe（通常・貫通・分裂）と自由配置．`R`で弾の並び，`B`で配置，左クリックで一発．Cost合計4以内で編集する．直前の通常弾が特殊弾を最大2段階強化する．変更は次周期から（初回発射前だけ即時）．貫通はCollectorを直列に，分裂はAmplifierの先へ扇状に置くと違いを試せる．
+
+Scene `Assets/_Project/Scenes/RecipeLab.unity`．検証・Build `.\scripts\recipe.ps1 verify`．出力は`Artifacts/Recipe/<日時>/Windows/OneBoardRecipeLab.exe`．旧版のBuildと保存データには触れない．対象範囲は`docs/AI_PROTOTYPE2_IMPLEMENTATION_BRIEF_2026-09-05.md`．反射パズル案は`docs/ideas/2026-09-05-reflection-puzzle.md`へ未採用メモとして保持．
+
+## 保存版：ROUTE LAB / Prototype 1A
 
 自由配置，Mirror回転，Collector二個とAmplifierを試せるWindows版．`B`で配置編集，ドラッグで移動，Mirror選択後`Q / E`またはホイールで回転，再び`B`で再開し左クリックで発射する．配置は自動保存され，日時付き履歴も残る．
 

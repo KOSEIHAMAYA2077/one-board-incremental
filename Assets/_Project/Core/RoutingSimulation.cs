@@ -37,6 +37,11 @@ namespace IncrementalGame.Core
         public int HitTarget;
         public readonly List<SimVector2> Trace = new List<SimVector2>();
         public readonly List<int> Contacts = new List<int>();
+        // Used only by the separate Recipe Lab simulation. Legacy routing remains unchanged.
+        public RecipeLineage Lineage;
+        public RecipeBullet Bullet;
+        public int Primer, Depth, PiercesLeft, SpawnSequence;
+        public readonly HashSet<int> ExitGuards = new HashSet<int>();
     }
 
     public static class RoutingSimulation

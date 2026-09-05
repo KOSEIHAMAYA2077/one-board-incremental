@@ -98,6 +98,13 @@ namespace IncrementalGame.Presentation
     {
         public RoutingContact Cast(RoutingShot shot, double distance)
         {
+            if (shot.Lineage != null && shot.ExitGuards.Count > 0)
+            {
+                var touching = new HashSet<int>();
+                foreach (var collider in Physics2D.OverlapCircleAll(LogicalSpace.ToWorld(shot.Position), (float)(RoutingShot.Radius + 0.05) / 100))
+                { var view = collider.GetComponent<BoardPieceView>(); if (view != null) touching.Add(view.Piece.Id); }
+                shot.ExitGuards.IntersectWith(touching);
+            }
             var hits = Physics2D.CircleCastAll(LogicalSpace.ToWorld(shot.Position), (float)RoutingShot.Radius / 100,
                 LogicalSpace.DirectionToWorld(shot.Velocity), (float)distance / 100);
             RaycastHit2D best = default;
@@ -105,7 +112,9 @@ namespace IncrementalGame.Presentation
             foreach (var hit in hits)
             {
                 var view = hit.collider.GetComponent<BoardPieceView>();
-                if (view == null || (view.Piece.Kind == BoardPieceKind.Amplifier && shot.Amplifiers.Contains(view.Piece.Id))) continue;
+                if (view == null) continue;
+                if (shot.Lineage != null ? shot.ExitGuards.Contains(view.Piece.Id) :
+                    view.Piece.Kind == BoardPieceKind.Amplifier && shot.Amplifiers.Contains(view.Piece.Id)) continue;
                 if (chosen == null || hit.distance < best.distance - 0.00001f ||
                     (Mathf.Abs(hit.distance - best.distance) <= 0.00001f && view.Piece.Id < chosen.Piece.Id))
                 { best = hit; chosen = view; }

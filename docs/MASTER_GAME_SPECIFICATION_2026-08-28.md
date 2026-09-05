@@ -1,6 +1,6 @@
 # 一盤面式能動型インクリメンタルゲーム Master仕様書
 
-文書Version：0.4.0
+文書Version：0.5.0
 更新日：2026年9月5日
 対象Engine：Unity 6000.3.18f1  
 第一対象Platform：Windows 10／11 x64  
@@ -722,6 +722,8 @@ Generation BudgetはRootを含む論理Projectile生成数である．Budget不�
 - 同一Lineageの同Target報酬は原則一回である．
 
 ### 11.3．分裂弾
+
+Prototype 2で未詳細部分を具体化する：子も分裂弾としてPrimer・残反射回数・反射履歴・倍率を継承する．深度3では分裂要求を抑止し親を終了，未生成数をLIMIT表示する．貫通残数0では次のCollector報酬後に吸収する．`INITIAL`
 
 状態：Prototype 2で`INITIAL`
 
@@ -1535,6 +1537,8 @@ Debug Buildだけ詳細Eventを保存し，公開Buildは集約Logへ切り替�
 
 ### 23.3．Prototype 2．五発Recipe
 
+Userの2026年9月5日の試遊OKと次段階指示により，購入経済より先に本段階へ進む．実装範囲は`AI_PROTOTYPE2_IMPLEMENTATION_BRIEF_2026-09-05.md`．P1A盤面・初期配置を継続し，初期Recipeは通常・通常・通常・通常・分裂，Capacity 4，全弾支給済みのSandbox．旧試作を保持する．`INITIAL`
+
 実装：通常，貫通，分裂，Primer，Capacity 4，Recipe UI，Lineage，Visited集合．
 
 成功候補：
@@ -1811,6 +1815,12 @@ Prototype 0の実装順は次とする．
 
 ## 30．変更履歴
 
+### 0.5.0．2026年9月5日
+
+- Userの次段階指示によりPrototype 2を自由配置版から分離し，五発Recipe・貫通・分裂を実装対象にした．
+- 子弾の弾種・継承，深度上限時の終了，貫通残数0の処理をINITIALとして明文化した．
+- 反射パズル案は未採用のアイデアメモへ保存し，製品ジャンルは変更していない．
+
 ### 0.4.0．2026年9月5日
 
 - User承認により，固定Socketからグリッド吸着付き自由配置へ変更した．
@@ -1851,6 +1861,6 @@ Prototype 0の実装順は次とする．
 
 ## 31．現在の最終判断
 
-現在はPrototype 0の動作確認を経て，Prototype 1Aの自由配置実装へ進める．Prototype 0の実装範囲と復元用Sceneは維持する．正式仕様として最も重要な未検証点は，Prototype 2において五発Recipeの順番がPlayerの照準と結果を実際に変えるかである．
+現在はPrototype 0とPrototype 1AのUser動作確認を経て，Prototype 2の五発Recipeへ進める．旧試作の実装範囲，復元用Scene，Buildは維持する．正式仕様として最も重要な未検証点は，Prototype 2において五発Recipeの順番がPlayerの照準と結果を実際に変えるかである．
 
 Prototype 0から2が成立するまで，完成時間，Content数，Core HP，後半弾種を確定しない．Prototype 2が失敗した場合，既存仕様へ機能を足して救済せず，五発Recipeを主軸から外す再設計を行う．

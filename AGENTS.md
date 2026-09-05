@@ -18,6 +18,8 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
+現在の追加実装はPrototype 2（0.3.0-recipe）．`docs/AI_PROTOTYPE2_IMPLEMENTATION_BRIEF_2026-09-05.md`を併読する．検証は`.\scripts\recipe.ps1 verify`．旧Prototype 0と1AのScene・Build・Brief・履歴を保持する．
+
 - Prototype 0外の機能を先回りして実装しない．
 - `Assets/_Project/Core`は`UnityEngine`へ依存させない．
 - Game LogicをMonoBehaviour，Animation，Audio，Particleへ置かない．
