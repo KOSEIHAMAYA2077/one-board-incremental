@@ -27,6 +27,9 @@ namespace IncrementalGame.Presentation
 
         public void Initialize(MomentumSimulation sim)
         {
+            var layout = sim.Layout;
+            var left=(float)layout.Left; var right=(float)layout.Right;
+            var top=(float)layout.Top; var bottom=(float)layout.Bottom;
             _block = new MaterialPropertyBlock();
             _crystalMaterial = new Material(Resources.Load<Shader>("MomentumCrystal"));
             _glowMaterial = new Material(Resources.Load<Shader>("MomentumGlow"));
@@ -36,11 +39,11 @@ namespace IncrementalGame.Presentation
             _quad.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
             _quad.triangles = new[] { 0,1,2,0,2,3 }; _quad.RecalculateBounds(); _meshes.Add(_quad);
             RouteDrawing.Shape(transform, "Neon black floor", Vector2.zero, new Vector2(16,9), new Color(.009f,.014f,.026f), false, -20);
-            RouteDrawing.Shape(transform, "Inset arena", World(940,440), new Vector2(12.4f,6.4f), new Color(.013f,.024f,.043f), false, -15);
+            RouteDrawing.Shape(transform, "Inset arena", World((left+right)/2,(top+bottom)/2), new Vector2((right-left)/100,(bottom-top)/100), new Color(.013f,.024f,.043f), false, -15);
             // The sparse grid is deliberately dim so the moving shots remain the focus.
-            for (var x = 360; x < 1560; x += 80) Line(transform, "Floor grid", new[] { World(x,120), World(x,760) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
-            for (var y = 160; y < 760; y += 80) Line(transform, "Floor grid", new[] { World(320,y), World(1560,y) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
-            GlowLine(transform, "Neon wall", new[] { World(320,120), World(1560,120), World(1560,760), World(320,760) }, Orange, .025f, 0, true);
+            for (var x = left+40; x < right; x += 80) Line(transform, "Floor grid", new[] { World(x,top), World(x,bottom) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
+            for (var y = top+40; y < bottom; y += 80) Line(transform, "Floor grid", new[] { World(left,y), World(right,y) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
+            GlowLine(transform, "Neon wall", new[] { World(left,top), World(right,top), World(right,bottom), World(left,bottom) }, Orange, .025f, 0, true);
             foreach (var t in sim.Targets)
             {
                 var root = Node("Crystal target " + t.Id, transform);
@@ -75,7 +78,7 @@ namespace IncrementalGame.Presentation
                 var jewel=MeshObject(_zone,"Orbit crystal",_diamond,_crystalMaterial,3);
                 jewel.transform.localPosition=p; jewel.transform.localScale=Vector3.one*.045f; Tint(jewel,Cyan);
             }
-            var gunBase=Node("Crystal launcher",transform); gunBase.position=LogicalSpace.ToWorld(MomentumRules.Gun);
+            var gunBase=Node("Crystal launcher",transform); gunBase.position=LogicalSpace.ToWorld(layout.Gun);
             Glow(gunBase,"Launcher glow",Vector3.zero,.55f,new Color(.8f,.2f,1f,.5f),3);
             var baseMesh=MeshObject(gunBase,"Launcher pedestal",_crystal,_crystalMaterial,4);
             baseMesh.transform.localScale=new Vector3(.3f,.21f,.4f); Tint(baseMesh,new Color(.65f,.25f,1));

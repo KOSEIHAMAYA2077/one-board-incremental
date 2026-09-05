@@ -5,6 +5,67 @@ namespace IncrementalGame.Tests.EditMode
 {
     public sealed class MomentumTests
     {
+        [Test] public void PortraitIsNineBySixteenAndKeepsCircularGeometry()
+        {
+            var layout=MomentumBoardLayout.Portrait;
+            Assert.That(layout.Width/layout.Height,Is.EqualTo(9.0/16));
+            Assert.That(layout.Contains(layout.Gun),Is.True);
+            Assert.That(MomentumRules.Radius,Is.EqualTo(8));
+            for(var i=0;i<200;i++)
+            {
+                var zone=layout.ZoneAt(i*.1);
+                Assert.That(zone.X-MomentumRules.ZoneRadius,Is.GreaterThan(layout.Left));
+                Assert.That(zone.X+MomentumRules.ZoneRadius,Is.LessThan(layout.Right));
+            }
+            Assert.That(new MomentumSimulation().Layout,Is.SameAs(MomentumBoardLayout.Landscape));
+        }
+        [Test] public void PortraitSeedsPlaceAllSevenTargetsWithoutOverlap()
+        {
+            for(uint seed=1;seed<=100;seed++)
+            {
+                var sim=new MomentumSimulation(seed,MomentumBoardLayout.Portrait);
+                var other=new MomentumSimulation(seed,MomentumBoardLayout.Portrait);
+                for(var i=0;i<7;i++)
+                {
+                    var t=sim.Targets[i];
+                    Assert.That(t.Alive,Is.True,$"seed={seed} target={i}");
+                    Assert.That(sim.PositionAvailable(t.Position,t.Radius,t.Id),Is.True);
+                    Assert.That(t.Position,Is.EqualTo(other.Targets[i].Position));
+                }
+            }
+        }
+        [Test] public void PortraitWallsReflectWithinTheNarrowStage()
+        {
+            var sim=new MomentumSimulation(layout:MomentumBoardLayout.Portrait); sim.Targets.Clear(); sim.Obstacles.Clear();
+            var b=Ball(1,new SimVector2(sim.Layout.Right-9,400),new SimVector2(900,0)); sim.Balls.Add(b);
+            sim.Tick(1.0/60); Assert.That(b.Velocity.X,Is.LessThan(0));
+            for(var i=0;i<600;i++)
+            {
+                sim.Tick(1.0/60);
+                foreach(var ball in sim.Balls) Assert.That(sim.Layout.Contains(ball.Position),Is.True);
+            }
+            Assert.That(sim.Balls.Count,Is.Zero);
+        }
+        [Test] public void DpsUsesFiveSecondEffectiveDamageAndExpires()
+        {
+            var stats=new MomentumCombatStats();
+            stats.Record(1,10,40,MomentumAmmo.Normal); stats.Record(2,25,26,MomentumAmmo.Pierce);
+            Assert.That(stats.RecentDps,Is.EqualTo(7)); Assert.That(stats.TotalDamage,Is.EqualTo(35));
+            Assert.That(stats.LastNormalImpact,Is.EqualTo(40)); Assert.That(stats.LastPierceImpact,Is.EqualTo(26));
+            stats.Advance(6); Assert.That(stats.RecentDps,Is.EqualTo(5));
+            stats.Advance(7); Assert.That(stats.RecentDps,Is.Zero); Assert.That(stats.TotalDamage,Is.EqualTo(35));
+        }
+        [Test] public void CombatStatsExcludeOverkillAndFreezeWhileEditing()
+        {
+            var sim=Empty(); var t=Target(1,new SimVector2(800,300),false); t.Hp=1; sim.Targets.Add(t);
+            sim.Balls.Add(Ball(1,new SimVector2(800,345),new SimVector2(0,-900)));
+            sim.Tick(1.0/60); Assert.That(sim.Stats.TotalDamage,Is.EqualTo(1)); Assert.That(sim.Stats.Hits,Is.EqualTo(1));
+            var dps=sim.Stats.RecentDps; sim.SetEditing(true);
+            for(var i=0;i<400;i++) sim.Tick(1.0/60);
+            Assert.That(sim.Stats.RecentDps,Is.EqualTo(dps));
+            sim.SetEditing(false); for(var i=0;i<400;i++) sim.Tick(1.0/60);
+            Assert.That(sim.Stats.RecentDps,Is.Zero);
+        }
         [Test] public void NormalHasMoreDamageButPierceRetainsMoreSpeed()
         {
             Assert.That(MomentumRules.Damage(MomentumAmmo.Normal, 900), Is.EqualTo(40));

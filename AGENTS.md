@@ -18,7 +18,7 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
-最新試作はMomentum Lab（表示比較Patch 0.4.1-neon）．Master §32・§32.1と`docs/AI_MOMENTUM_LAB_IMPLEMENTATION_BRIEF_2026-09-05.md`を参照．Game Logicと音は0.4.0から変更せず、F2でネオン結晶／旧表示を切替。旧Prototype・Build・Tagは保持する．`.\scripts\momentum.ps1 verify`を使う．以下に残るPrototype 1A／2の記述は旧版の復元用．
+最新試作はMomentum Lab（縦長三列Patch 0.4.2-portrait）．Master §32〜§32.2と`docs/AI_MOMENTUM_LAB_IMPLEMENTATION_BRIEF_2026-09-05.md`を参照．中央9:16盤面、左DPS/ログ、右弾倉/強化領域。音とBalance数値は継続、F2でネオン結晶／旧表示を切替。旧横長Layout・Prototype・Build・Tagは保持する．`.\scripts\momentum.ps1 verify`を使う．以下に残るPrototype 1A／2の記述は旧版の復元用．
 
 現在の追加実装はPrototype 2（0.3.0-recipe）．`docs/AI_PROTOTYPE2_IMPLEMENTATION_BRIEF_2026-09-05.md`を併読する．検証は`.\scripts\recipe.ps1 verify`．旧Prototype 0と1AのScene・Build・Brief・履歴を保持する．
 

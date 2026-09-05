@@ -22,6 +22,10 @@ Master v0.6.0 §32が今回のGame Logic正本．旧章との競合は§32を優
 
 User承認のMaster §32.1に従い、ネオン発光と3D結晶Meshを追加する。ゲーム挙動・数値・音は変更しない。F2で従来表示と比較できる。現時点の対象Buildは0.4.1-neonで、上記0.4.0のGame LogicとSave互換を保持する。外部購入Assetは使わず、生成Meshと専用Shaderで試す。検証は旧Test一式、描画切替の論理不変、Mesh奥行き、演出消滅、Windows Build、FHD画像確認。
 
+## 縦長三列Patch 0.4.2-portrait
+
+最新対象はMaster §32.2。FHDの中央に9:16の実盤面、左に実効DPS/威力/直近ログ、右に弾倉編集と未実装の強化領域を置く。旧0.4.1の見た目を維持し、Geometryのみ新Layoutへ変更。DPSは5秒窓の実HP減少÷5でOverkill除外、Pause中は窓も停止。旧横長Layout/Test/Buildを保持する。音やBalance数値、Save形式は変更しない。追加受入条件は100Seedの重なりなし配置、縦長壁反射、UI誤射防止、DPSのOverkill/窓/Pause、FHD全画面の可読性。
+
 ## 今回入れない（継続）
 
 ゴールド／カオス等の追加ゾーン，爆発・分裂・裂傷弾，銃の購入／強化，Material，Core，手動配置．これらはメモに残すだけ．

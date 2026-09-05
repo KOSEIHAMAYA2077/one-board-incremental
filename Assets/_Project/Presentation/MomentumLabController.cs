@@ -7,9 +7,9 @@ using UnityEngine;
 
 namespace IncrementalGame.Presentation
 {
-    public sealed class MomentumLabController : MonoBehaviour
+    public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.4.1-neon";
+        public const string GameVersion = "0.4.2-portrait";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -37,7 +37,7 @@ namespace IncrementalGame.Presentation
         {
             _diagnostic = Array.IndexOf(Environment.GetCommandLineArgs(), "-momentum-capture") >= 0;
             if (_diagnostic) { PersistenceEnabled = false; Application.runInBackground = true; }
-            Simulation = new MomentumSimulation();
+            Simulation = new MomentumSimulation(layout: MomentumBoardLayout.Portrait);
             _camera = GetComponentInChildren<Camera>(); _audio = GetComponent<PrototypeAudio>();
             Time.fixedDeltaTime = 1f / 60; Application.targetFrameRate = 120;
             LoadMagazine(); BuildBoard();
@@ -50,11 +50,12 @@ namespace IncrementalGame.Presentation
         }
         private void BuildBoard()
         {
+            var layout = Simulation.Layout;
             RouteDrawing.Shape(transform, "Background", Vector2.zero, new Vector2(16, 9), new Color(.035f, .05f, .07f), false, -20);
-            RouteDrawing.Shape(transform, "Field", LogicalSpace.ToWorld(new SimVector2(940, 440)), new Vector2(12.4f, 6.4f), new Color(.05f, .08f, .105f), false, -15);
+            RouteDrawing.Shape(transform, "Field", LogicalSpace.ToWorld(new SimVector2((layout.Left + layout.Right) / 2, (layout.Top + layout.Bottom) / 2)), new Vector2((float)layout.Width / 100, (float)layout.Height / 100), new Color(.05f, .08f, .105f), false, -15);
             var border = RouteDrawing.Line(transform, "Reflecting boundary", new Color(.23f, .38f, .45f), .035f, 0);
             border.loop = true; border.positionCount = 4;
-            border.SetPositions(new[] { World(320, 120), World(1560, 120), World(1560, 760), World(320, 760) });
+            border.SetPositions(new[] { World(layout.Left, layout.Top), World(layout.Right, layout.Top), World(layout.Right, layout.Bottom), World(layout.Left, layout.Bottom) });
             foreach (var obstacle in Simulation.Obstacles)
             {
                 RouteDrawing.Shape(transform, "Reflecting obstacle", LogicalSpace.ToWorld(obstacle.Position), Vector2.one * .52f, new Color(.26f, .34f, .42f), true, 2);
@@ -68,8 +69,8 @@ namespace IncrementalGame.Presentation
             }
             _zone = RouteDrawing.Shape(transform, "Moving speed zone", LogicalSpace.ToWorld(Simulation.ZonePosition), Vector2.one * 1.3f, new Color(.15f, .82f, 1, .12f), true, 1);
             _zoneRing = CircleLine("Speed zone boundary", Simulation.ZonePosition, 65, new Color(.2f, .85f, 1, .75f), .025f, 2);
-            RouteDrawing.Shape(transform, "Gun", LogicalSpace.ToWorld(MomentumRules.Gun), new Vector2(.55f, .32f), new Color(1, .76f, .32f), false, 4);
-            _gunBarrel = RouteDrawing.Shape(transform, "Barrel", LogicalSpace.ToWorld(MomentumRules.Gun + new SimVector2(0, -15)), new Vector2(.12f, .36f), new Color(1, .85f, .5f), false, 5);
+            RouteDrawing.Shape(transform, "Gun", LogicalSpace.ToWorld(layout.Gun), new Vector2(.55f, .32f), new Color(1, .76f, .32f), false, 4);
+            _gunBarrel = RouteDrawing.Shape(transform, "Barrel", LogicalSpace.ToWorld(layout.Gun + new SimVector2(0, -15)), new Vector2(.12f, .36f), new Color(1, .85f, .5f), false, 5);
             _aimLine = RouteDrawing.Line(transform, "Aim guide", new Color(1, .79f, .4f, .4f), .015f, 2);
         }
         private static Vector3 World(double x, double y) => LogicalSpace.ToWorld(new SimVector2(x, y));
@@ -97,7 +98,7 @@ namespace IncrementalGame.Presentation
         }
         public bool TryFire(SimVector2 aim)
         {
-            if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.TryFire(aim)) return false;
+            if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.Layout.Contains(aim) || !Simulation.TryFire(aim)) return false;
             Log($"magazine id={Simulation.MagazineCount} aim={aim} slots={string.Join(",", Simulation.Magazine)}");
             SyncViews(); return true;
         }
@@ -106,7 +107,7 @@ namespace IncrementalGame.Presentation
             aim = default;
             if (_camera == null || !_camera.pixelRect.Contains(Input.mousePosition)) return false;
             aim = LogicalSpace.ToLogical(_camera.ScreenToWorldPoint(Input.mousePosition));
-            return aim.X >= 320 && aim.X <= 1560 && aim.Y >= 120 && aim.Y <= 760;
+            return Simulation.Layout.Contains(aim);
         }
         private void Update()
         {
@@ -118,11 +119,11 @@ namespace IncrementalGame.Presentation
             _aimLine.enabled = over && !Simulation.Editing;
             if (_aimLine.enabled)
             {
-                var dir = (aim - MomentumRules.Gun).Normalized;
+                var dir = (aim - Simulation.Layout.Gun).Normalized;
                 NeonView.SetAim(dir);
-                _aimLine.positionCount = 2; _aimLine.SetPosition(0, LogicalSpace.ToWorld(MomentumRules.Gun));
-                _aimLine.SetPosition(1, LogicalSpace.ToWorld(MomentumRules.Gun + dir * 150));
-                _gunBarrel.transform.position = LogicalSpace.ToWorld(MomentumRules.Gun + dir * 16);
+                _aimLine.positionCount = 2; _aimLine.SetPosition(0, LogicalSpace.ToWorld(Simulation.Layout.Gun));
+                _aimLine.SetPosition(1, LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 100));
+                _gunBarrel.transform.position = LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 16);
                 _gunBarrel.transform.rotation = Quaternion.Euler(0, 0, (float)(-Math.Atan2(dir.Y, dir.X) * 180 / Math.PI - 90));
             }
         }
@@ -138,6 +139,7 @@ namespace IncrementalGame.Presentation
                 if (e.Kind == "destroy") { _lastGold = (int)e.Amount; _message = $"撃破 +{_lastGold} Gold。壊れた的は次の斉射で別の位置へ。"; }
                 if (e.Kind == "boost") _message = $"加速！ 速度 {e.Amount:0}。この弾は奥まで届きやすくなります。";
                 Log($"{e.Kind} target={e.Target} amount={e.Amount:0.00}");
+                RecordCombatFeed(e);
             }
             for (var i = _popups.Count - 1; i >= 0; i--)
             { _popups[i].Time -= seconds; if (_popups[i].Time <= 0) _popups.RemoveAt(i); }
@@ -191,74 +193,6 @@ namespace IncrementalGame.Presentation
             _gold = new GUIStyle(_title) { fontSize = 38, normal = { textColor = new Color(1, .79f, .38f) } };
             _button = new GUIStyle(GUI.skin.button) { font = _font, fontSize = 16, wordWrap = true, padding = new RectOffset(8, 8, 4, 4) };
             _targetLabel = new GUIStyle(_small) { alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(.93f, .96f, .98f) } };
-        }
-        private void OnGUI()
-        {
-            if (_camera == null || Simulation == null) return;
-            EnsureStyles(); if (Event.current.type == EventType.Repaint) _overflows.Clear();
-            var prior = GUI.matrix; var r = _camera.pixelRect;
-            GUI.matrix = Matrix4x4.TRS(new Vector3(r.x, Screen.height - r.yMax, 0), Quaternion.identity, Vector3.one * (r.width / 1600));
-            Panel(new Rect(0, 0, 1600, 100), new Color(.04f, .06f, .085f));
-            Label(28, 18, 290, 36, "MOMENTUM LAB", _title);
-            Label(28, 60, 290, 28, NeonEnabled ? "NEON / CRYSTAL　立体描画試作" : "CLASSIC　旧表示との比較", _small);
-            for (var i = 0; i < 3; i++)
-            {
-                var x = 350 + i * 165;
-                Panel(new Rect(x, 12, 150, 76), new Color(.1f, .15f, .2f));
-                Label(x + 12, 16, 125, 25, "弾倉 " + (i + 1), _small);
-                Label(x + 12, 43, 125, 34, AmmoName(Simulation.Magazine[i]), _title);
-            }
-            Label(865, 20, 420, 32, Simulation.Editing ? "編集：すべて停止中" : Simulation.Bursting ? $"斉射中：残り {Simulation.RemainingInBurst} 発" : Simulation.Ready ? "クリックで三発発射" : $"リロード {Simulation.ReloadRemaining:0.0} 秒", _body);
-            Label(865, 58, 400, 26, "発射間隔 0.12秒 / 撃ち切り後 0.8秒", _small);
-            if (Button(new Rect(1280, 25, 280, 48), Simulation.Editing ? "再開 [R]" : "弾倉を編集 [R]")) SetEditing(!Simulation.Editing);
-            Panel(new Rect(20, 120, 275, 640), new Color(.06f, .09f, .12f));
-            Label(40, 142, 235, 28, "獲得 GOLD", _small); Label(40, 177, 235, 65, Simulation.Gold.ToString(), _gold);
-            Label(40, 263, 235, 58, $"斉射 {Simulation.MagazineCount} 回 / 発射 {Simulation.FiredCount} 発\n撃破 {Simulation.DestroyedCount} / 加速 {Simulation.BoostCount}", _body);
-            Label(40, 340, 235, 34, "弾のちがい", _title);
-            Label(40, 387, 235, 62, "通常：一撃が強い\n威力40 / 抵抗をそのまま受ける", _small);
-            Label(40, 469, 235, 62, "貫通：勢いを失いにくい\n威力26 / 抵抗による減速は1/4", _small);
-            Label(40, 555, 235, 83, "青い円：速度 ×2\n速度が高いほど威力も上昇\n同じ弾への加速は一回まで", _small);
-            Label(40, 664, 235, 72, $"飛行中 {Simulation.Balls.Count} 発\n速度80以下で消滅\n最大速度1800 / 時間減速あり", _small);
-            foreach (var target in Simulation.Targets)
-            {
-                if (!target.Alive) continue; var p = target.Position;
-                Label((float)p.X - 72, (float)p.Y - 23, 144, 25, target.Armored ? "装甲" : "通常", _targetLabel);
-                Label((float)p.X - 72, (float)p.Y + 1, 144, 25, $"{target.Hp:0} / {target.MaximumHp:0}", _targetLabel);
-                Label((float)p.X - 72, (float)(p.Y + target.Radius + 10), 144, 24, $"抵抗 {target.Resistance:0}", _targetLabel);
-            }
-            var zone = Simulation.ZonePosition;
-            Label((float)zone.X - 54, (float)zone.Y - 14, 120, 30, "速度 ×2", _body);
-            for (var i = Math.Max(0, Simulation.Balls.Count - 3); i < Simulation.Balls.Count; i++)
-            {
-                var b = Simulation.Balls[i]; Label(Mathf.Clamp((float)b.Position.X + 12, 330, 1460), Mathf.Clamp((float)b.Position.Y - 25, 124, 710), 95, 25, $"{b.Speed:0}", _small);
-            }
-            foreach (var pop in _popups)
-                Label((float)pop.Position.X - 50, (float)pop.Position.Y - 55 - (float)(1 - pop.Time) * 25, 180, 32,
-                    pop.Kind == "hit" ? $"−{pop.Amount:0}" : pop.Kind == "destroy" ? $"+{pop.Amount:0} Gold" : "加速 ×2", _body);
-            Panel(new Rect(0, 780, 1600, 120), new Color(.04f, .06f, .085f));
-            Label(30, 802, 850, 65, _message, _body);
-            Label(1020, 796, 540, 28, "クリック：三発　R：弾倉　F2：見た目切替", _small);
-            Label(1020, 835, 540, 53, $"{GameVersion} / {BuildMetadata.CommitHash}\nSeed {Simulation.Seed}", _small);
-            if (Simulation.Editing) DrawEditor();
-            GUI.matrix = prior;
-        }
-        private void DrawEditor()
-        {
-            Panel(new Rect(310, 110, 1280, 660), new Color(.025f, .04f, .065f, .97f));
-            Label(395, 188, 1050, 44, "一クリックで、この三発を撃ち切る。", _title);
-            Label(395, 257, 1020, 75, "通常は一撃重視。貫通は抵抗に強く、奥まで届く。\nクリックで弾を切り替え。飛行中の弾と加速ゾーンは停止しています。", _body);
-            for (var i = 0; i < 3; i++)
-            {
-                var x = 395 + i * 360;
-                if (Button(new Rect(x, 376, 320, 100), $"{i + 1}　{AmmoName(Simulation.Magazine[i])}\nクリックで切り替え"))
-                {
-                    var slots = new[] { Simulation.Magazine[0], Simulation.Magazine[1], Simulation.Magazine[2] };
-                    slots[i] = slots[i] == MomentumAmmo.Normal ? MomentumAmmo.Pierce : MomentumAmmo.Normal;
-                    Simulation.SetMagazine(slots);
-                }
-            }
-            Label(395, 523, 1040, 62, "速度が高いほど威力が上がり、的を抜けやすくなる。\n硬い的も通常弾で削れる。加速ゾーンを通すルートも試そう。", _body);
-            if (Button(new Rect(1135, 652, 300, 54), "この弾倉で再開 [R]")) SetEditing(false);
         }
         private static void Panel(Rect rect, Color color)
         { var old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = old; }
@@ -324,7 +258,7 @@ namespace IncrementalGame.Presentation
             yield return new WaitForSecondsRealtime(1); yield return new WaitForEndOfFrame();
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;
-            TryFire(MomentumRules.ZoneAt(Simulation.Time + .2));
+            TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
             for (var i = 0; i < 35; i++) StepSimulation(1.0 / 60);
             var three = Simulation.FiredCount == 3; var boost = Simulation.BoostCount;
             CaptureBoard(Path.Combine(folder, "01-flight-board.png"));

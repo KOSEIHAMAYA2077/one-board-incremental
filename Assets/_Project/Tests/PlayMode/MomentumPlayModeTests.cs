@@ -35,7 +35,7 @@ namespace IncrementalGame.Tests.PlayMode
                 Assert.That(sim.Time, Is.EqualTo(time)); Assert.That(sim.Gold, Is.EqualTo(gold));
                 controller.SetEditing(false);
                 for(var i=0;i<2;i++) yield return null;
-                Assert.That(controller.TryFire(MomentumRules.ZoneAt(sim.Time + .2)), Is.True);
+                Assert.That(controller.TryFire(sim.Layout.ZoneAt(sim.Time + .2)), Is.True);
                 for(var i=0;i<35;i++) controller.StepSimulation(1.0/60);
                 Assert.That(controller.NeonView.FlightCount, Is.EqualTo(sim.Balls.Count));
                 Assert.That(sim.BoostCount, Is.GreaterThan(0));
@@ -56,6 +56,9 @@ namespace IncrementalGame.Tests.PlayMode
             try
             {
                 root.SetActive(true); yield return null; yield return null;
+                Assert.That(controller.Simulation.Layout.Width / controller.Simulation.Layout.Height, Is.EqualTo(9.0 / 16));
+                Assert.That(controller.TryFire(new SimVector2(200, 400)), Is.False, "Left telemetry must not shoot");
+                Assert.That(controller.TryFire(new SimVector2(1250, 400)), Is.False, "Right loadout must not shoot");
                 Assert.That(controller.TryFire(new SimVector2(940, 200)), Is.True);
                 for (var i = 0; i < 20; i++) controller.StepSimulation(1.0 / 60);
                 Assert.That(controller.Simulation.FiredCount, Is.EqualTo(3));
