@@ -16,7 +16,7 @@ namespace IncrementalGame.Presentation
         private Transform _zone, _gun;
         private MeshRenderer _zoneAura;
         private double _lastTime = -1;
-        private readonly MaterialPropertyBlock _block = new MaterialPropertyBlock();
+        private MaterialPropertyBlock _block;
         private static readonly Color Cyan = new Color(.08f, .8f, 1f);
         private static readonly Color Green = new Color(.3f, 1f, .23f);
         private static readonly Color Orange = new Color(1f, .27f, .055f);
@@ -27,6 +27,7 @@ namespace IncrementalGame.Presentation
 
         public void Initialize(MomentumSimulation sim)
         {
+            _block = new MaterialPropertyBlock();
             _crystalMaterial = new Material(Resources.Load<Shader>("MomentumCrystal"));
             _glowMaterial = new Material(Resources.Load<Shader>("MomentumGlow"));
             _crystal = MakeCrystal(8); _diamond = MakeCrystal(4);
