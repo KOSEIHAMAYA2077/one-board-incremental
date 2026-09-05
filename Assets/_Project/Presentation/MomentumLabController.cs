@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.5.4-brake";
+        public const string GameVersion = "0.5.5-steer";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -103,7 +103,22 @@ namespace IncrementalGame.Presentation
         {
             if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.Layout.Contains(aim) || !Simulation.TryFire(aim)) return false;
             Log($"magazine id={Simulation.MagazineCount} aim={aim} slots={string.Join(",", Simulation.Magazine)}");
+            DrawAim(Simulation.BurstAim);
             SyncViews(); return true;
+        }
+        public bool SteerBurst(SimVector2 aim)
+        {
+            if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.UpdateBurstAim(aim)) return false;
+            DrawAim(Simulation.BurstAim);
+            return true;
+        }
+        private void DrawAim(SimVector2 dir)
+        {
+            NeonView.SetAim(dir);
+            _aimLine.positionCount = 2; _aimLine.SetPosition(0, LogicalSpace.ToWorld(Simulation.Layout.Gun));
+            _aimLine.SetPosition(1, LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 100));
+            _gunBarrel.transform.position = LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 16);
+            _gunBarrel.transform.rotation = Quaternion.Euler(0, 0, (float)(-Math.Atan2(dir.Y, dir.X) * 180 / Math.PI - 90));
         }
         private bool MouseAim(out SimVector2 aim)
         {
@@ -114,22 +129,18 @@ namespace IncrementalGame.Presentation
         }
         private void Update()
         {
-            if (!_focus) return;
+            if (!_focus || _diagnostic) return;
             if (Input.GetKeyDown(KeyCode.F2)) SetNeonEnabled(!NeonEnabled);
             if (Input.GetKeyDown(KeyCode.F3)) NeonView.SetCrystalKitEnabled(!NeonView.CrystalKitEnabled);
             if (Input.GetKeyDown(KeyCode.Space)) RecallVolley();
             if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
             var over = MouseAim(out var aim);
             if (!Simulation.Editing && over && Input.GetMouseButtonDown(0)) TryFire(aim);
+            if (over) SteerBurst(aim);
             _aimLine.enabled = over && !Simulation.Editing && !ClearPanelVisible;
             if (_aimLine.enabled)
             {
-                var dir = (aim - Simulation.Layout.Gun).Normalized;
-                NeonView.SetAim(dir);
-                _aimLine.positionCount = 2; _aimLine.SetPosition(0, LogicalSpace.ToWorld(Simulation.Layout.Gun));
-                _aimLine.SetPosition(1, LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 100));
-                _gunBarrel.transform.position = LogicalSpace.ToWorld(Simulation.Layout.Gun + dir * 16);
-                _gunBarrel.transform.rotation = Quaternion.Euler(0, 0, (float)(-Math.Atan2(dir.Y, dir.X) * 180 / Math.PI - 90));
+                DrawAim(Simulation.Bursting ? Simulation.BurstAim : (aim - Simulation.Layout.Gun).Normalized);
             }
         }
         private void FixedUpdate() { if (_focus && !_stressDiagnostic) StepSimulation(1.0 / 60); }
@@ -291,11 +302,15 @@ namespace IncrementalGame.Presentation
                 yield break;
             }
             TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
+            var steerDiagnostic = Array.IndexOf(Environment.GetCommandLineArgs(), "-momentum-steer") >= 0;
+            var steerChanges = 0;
             var peakBalls=0; var maxFrameMs=0f; var totalFrameMs=0f; var peakCaptured=false;
             if (_stressDiagnostic)
             {
                 for(var frame=0;frame<240;frame++)
                 {
+                    if(steerDiagnostic && (frame==24 || frame==54))
+                        if(SteerBurst(new SimVector2(frame==24?550:1050,220))) steerChanges++;
                     StepSimulation(1.0/60);
                     peakBalls=Math.Max(peakBalls,Simulation.Balls.Count);
                     if(!peakCaptured && Simulation.Balls.Count>=60) { CaptureBoard(Path.Combine(folder,"00-chain-board.png")); peakCaptured=true; }
@@ -311,9 +326,9 @@ namespace IncrementalGame.Presentation
             SetEditing(true); var before = Simulation.Time; StepSimulation(1.0 / 60); var paused = before == Simulation.Time;
             yield return new WaitForEndOfFrame(); var editorOverflow = string.Join("\n", _overflows);
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
-            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; focused={Application.isFocused}; diagnosticMeanFrameMs={totalFrameMs/230:0.00}; diagnosticMaxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
+            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; focused={Application.isFocused}; diagnosticMeanFrameMs={totalFrameMs/230:0.00}; diagnosticMaxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nSteerChanges={steerChanges}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
-            Application.Quit(!_flatCaptureDetected && fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
+            Application.Quit((!steerDiagnostic || steerChanges==2) && !_flatCaptureDetected && fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private void CaptureBoard(string path)
         {

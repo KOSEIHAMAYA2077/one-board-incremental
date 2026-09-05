@@ -126,6 +126,14 @@ namespace IncrementalGame.Core
             RefillTargets();
         }
         public void SetEditing(bool editing) { Editing = editing; }
+        public SimVector2 BurstAim => _aim;
+        public bool UpdateBurstAim(SimVector2 aim)
+        {
+            if (Progress == null || Editing || !Bursting || !MomentumRules.Finite(aim.X) || !MomentumRules.Finite(aim.Y)
+                || !Layout.Contains(aim) || (aim - Layout.Gun).Magnitude < 30) return false;
+            _aim = (aim - Layout.Gun).Normalized;
+            return true;
+        }
         public bool SetMagazine(IReadOnlyList<MomentumAmmo> slots)
         {
             if (!Editing || slots == null || slots.Count != 3) return false;
@@ -150,7 +158,7 @@ namespace IncrementalGame.Core
             Balls.Add(ball);
             FiredCount++;
             if (_nextSlot == _firing.Length) { _firing = null; _readyAt = Time + .8; }
-            else _nextShotTime += Progress == null ? .12 : _volleyGun == 0 ? .12 : .05;
+            else _nextShotTime += Progress == null ? .12 : ShotInterval(_volleyGun);
         }
         public void Tick(double seconds)
         {

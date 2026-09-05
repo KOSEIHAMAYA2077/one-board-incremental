@@ -14,6 +14,7 @@ namespace IncrementalGame.Core
         public int RemainingTargets => Targets.FindAll(t => t.Alive).Count;
         public bool CanConfigure => Progress != null && !Bursting && Balls.Count == 0;
         public const double RefireSpeed = 300;
+        public static double ShotInterval(int gun) => gun == 0 ? .4 : .12;
         public double FastestBallSpeed
         {
             get { var speed = 0.0; foreach (var ball in Balls) if (ball.Alive) speed = Math.Max(speed, ball.Speed); return speed; }

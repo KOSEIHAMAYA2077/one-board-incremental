@@ -6,6 +6,61 @@ namespace IncrementalGame.Tests.EditMode
 {
     public sealed class MomentumChallengeTests
     {
+        [TestCase(0,6,.4)] [TestCase(1,18,.12)]
+        public void SlowCadenceKeepsShotCountAndReloadStartsAfterLastShot(int gun,int count,double interval)
+        {
+            var p=Full();p.gun=gun;var sim=new MomentumSimulation(progress:p);
+            Assert.That(sim.TryFire(new SimVector2(800,200)),Is.True);sim.Targets.Clear();sim.Obstacles.Clear();
+            Assert.That(sim.FiredCount,Is.EqualTo(1));
+            while(sim.Bursting)
+            {
+                sim.Tick(1.0/60);
+                Assert.That(sim.FiredCount,Is.EqualTo(System.Math.Min(count,1+(int)System.Math.Floor((sim.Time+1e-9)/interval))));
+                foreach(var b in sim.Balls) Assert.That(b.ExpiresAt,Is.EqualTo(10),"Later shots do not reset the magazine lifetime");
+                Assert.That(sim.Time,Is.LessThan(3));
+            }
+            Assert.That(sim.Time,Is.InRange((count-1)*interval-1e-8,(count-1)*interval+1.0/60));
+            Assert.That(sim.ReloadRemaining,Is.EqualTo(.8).Within(1e-8));
+            Run(sim,47);Assert.That(sim.ReloadRemaining,Is.GreaterThan(0));
+            Run(sim,1);Assert.That(sim.ReloadRemaining,Is.EqualTo(0).Within(1e-8));
+            Assert.That(sim.FiredCount,Is.EqualTo(count));
+        }
+        [Test] public void SteeringOnlyChangesFutureShotsAndRejectsInvalidAim()
+        {
+            var sim=new MomentumSimulation(progress:Full());
+            Assert.That(sim.UpdateBurstAim(new SimVector2(1000,400)),Is.False);
+            sim.TryFire(new SimVector2(800,200));sim.Targets.Clear();sim.Obstacles.Clear();
+            var first=sim.Balls[0];first.Boosted=true;var initialVelocity=first.Velocity;
+            Assert.That(sim.UpdateBurstAim(new SimVector2(1050,815)),Is.True);
+            Assert.That(first.Velocity,Is.EqualTo(initialVelocity),"Already flying balls are not steered");
+            var aimed=sim.BurstAim;
+            foreach(var invalid in new[]{new SimVector2(double.NaN,0),new SimVector2(0,double.PositiveInfinity),new SimVector2(200,400),sim.Layout.Gun})
+            { Assert.That(sim.UpdateBurstAim(invalid),Is.False);Assert.That(sim.BurstAim,Is.EqualTo(aimed)); }
+            sim.SetEditing(true);Assert.That(sim.UpdateBurstAim(new SimVector2(550,815)),Is.False);Run(sim,40);
+            Assert.That(sim.FiredCount,Is.EqualTo(1));sim.SetEditing(false);
+            Run(sim,23);Assert.That(sim.FiredCount,Is.EqualTo(1));Run(sim,1);
+            var second=sim.Balls.Find(b=>b.Id==2);Assert.That(second.Velocity.Normalized.X,Is.GreaterThan(.99));
+            Assert.That(first.Velocity.Normalized.Y,Is.LessThan(-.99));
+            Assert.That(sim.UpdateBurstAim(new SimVector2(550,815)),Is.True);Run(sim,24);
+            Assert.That(sim.Balls.Find(b=>b.Id==3).Velocity.Normalized.X,Is.LessThan(-.99));
+            sim.Recall();Assert.That(sim.UpdateBurstAim(new SimVector2(800,200)),Is.False);
+            var legacy=new MomentumSimulation();legacy.TryFire(new SimVector2(800,200));
+            Assert.That(legacy.UpdateBurstAim(new SimVector2(1000,400)),Is.False,"Old lab keeps locked aim");
+        }
+        [Test] public void IdenticalTimedSteeringInputsRemainDeterministic()
+        {
+            var a=new MomentumSimulation(123,progress:Full());var b=new MomentumSimulation(123,progress:Full());
+            a.TryFire(new SimVector2(800,200));b.TryFire(new SimVector2(800,200));
+            for(var i=0;i<660;i++)
+            {
+                var aim=new SimVector2(i%48<24?550:1050,220);
+                Assert.That(a.UpdateBurstAim(aim),Is.EqualTo(b.UpdateBurstAim(aim)));
+                a.Tick(1.0/60);b.Tick(1.0/60);
+                Assert.That(a.FiredCount,Is.EqualTo(b.FiredCount));Assert.That(a.Balls.Count,Is.EqualTo(b.Balls.Count));
+                for(var n=0;n<a.Balls.Count;n++) { Assert.That(a.Balls[n].Position,Is.EqualTo(b.Balls[n].Position));Assert.That(a.Balls[n].Velocity,Is.EqualTo(b.Balls[n].Velocity)); }
+            }
+            Assert.That(a.Gold,Is.EqualTo(b.Gold));Assert.That(a.Balls,Is.Empty);
+        }
         [TestCase(.05)] [TestCase(1.0/60)] [TestCase(.01)]
         public void QuickTailStopsWithinQuarterSecondWithoutLongSlide(double tick)
         {
@@ -60,7 +115,7 @@ namespace IncrementalGame.Tests.EditMode
             var sim=new MomentumSimulation(progress:Full());
             foreach(var t in sim.Targets) t.Hp=1000000;
             Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
-            Run(sim,90);
+            Run(sim,180); // New six-shot burst takes 2s, followed by 0.8s reload.
             sim.Balls.Add(new MomentumBall { Id=9999, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-301), ExpiresAt=10, Generation=5 });
             Assert.That(sim.ReloadRemaining,Is.Zero);
             Assert.That(sim.Ready,Is.False);
@@ -84,7 +139,7 @@ namespace IncrementalGame.Tests.EditMode
         [Test] public void SlowTailDoesNotSkipReloadOrQueueRejectedClicks()
         {
             var sim=new MomentumSimulation(progress:new MomentumProgress());
-            sim.TryFire(sim.ZonePosition); Run(sim,40);
+            sim.TryFire(sim.ZonePosition); Run(sim,130);
             sim.Balls.Clear();
             sim.Balls.Add(new MomentumBall { Position=new SimVector2(800,780), Velocity=new SimVector2(0,-100), Boosted=true });
             Assert.That(sim.ReloadRemaining,Is.GreaterThan(0));
@@ -96,7 +151,7 @@ namespace IncrementalGame.Tests.EditMode
         {
             var sim=new MomentumSimulation(progress:new MomentumProgress());
             foreach(var t in sim.Targets) t.Hp=1000000;
-            sim.TryFire(sim.ZonePosition); Run(sim,90); sim.Balls.Clear();
+            sim.TryFire(sim.ZonePosition); Run(sim,180); sim.Balls.Clear();
             var old=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-300), Boosted=true, ExpiresAt=10 };
             sim.Balls.Add(old);
             var newExpiry=sim.Time+10;
@@ -111,7 +166,7 @@ namespace IncrementalGame.Tests.EditMode
         public void OverlappingMagazinesKeepIndependentSplitBudgets(int oldCount,int suppressed,int finalCount)
         {
             var sim=new MomentumSimulation(progress:Full());
-            sim.TryFire(sim.ZonePosition); Run(sim,90); sim.Balls.Clear(); sim.Targets.Clear(); sim.Obstacles.Clear();
+            sim.TryFire(sim.ZonePosition); Run(sim,180); sim.Balls.Clear(); sim.Targets.Clear(); sim.Obstacles.Clear();
             sim.Targets.Add(new MomentumTarget { Id=1, Position=new SimVector2(800,300), Hp=1000000 });
             var old=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,335), Velocity=new SimVector2(0,-300), Mods=MomentumMod.Split, ResistanceScale=.25, Boosted=true, ExpiresAt=10 };
             sim.Balls.Add(old);
@@ -133,7 +188,7 @@ namespace IncrementalGame.Tests.EditMode
             Assert.That(sim.Ready,Is.False);
             sim.Balls.RemoveAt(0); Assert.That(sim.Ready,Is.True);
             Assert.That(sim.TryFire(sim.ZonePosition),Is.True);
-            for(var i=0;i<90;i++) { sim.Tick(1.0/60); Assert.That(sim.Balls.Count+sim.RemainingInBurst,Is.LessThanOrEqualTo(256)); }
+            for(var i=0;i<180;i++) { sim.Tick(1.0/60); Assert.That(sim.Balls.Count+sim.RemainingInBurst,Is.LessThanOrEqualTo(256)); }
         }
         [Test] public void ReacceleratedTailBlocksAgainAndAllDeadTargetsCannotConsumeMagazine()
         {
@@ -247,7 +302,7 @@ namespace IncrementalGame.Tests.EditMode
             sim.TryFire(sim.ZonePosition); sim.Recall();
             Assert.That(sim.ChallengeState,Is.EqualTo(MomentumChallengeState.Failed));
             sim.StartChallenge(0);
-            sim.TryFire(sim.ZonePosition); Run(sim,40);
+            sim.TryFire(sim.ZonePosition); Run(sim,130);
             foreach(var t in sim.Targets) t.Hp=0;
             var last=sim.Targets[0]; last.Hp=1; last.Position=new SimVector2(800,300);
             sim.Balls.Clear(); sim.Balls.Add(new MomentumBall { Id=1000, Position=new SimVector2(800,335), Velocity=new SimVector2(0,-300), ExpiresAt=sim.Time+.05 });

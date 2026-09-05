@@ -71,13 +71,13 @@ namespace IncrementalGame.Presentation
             var sim=Simulation; var p=sim.Progress; var free=sim.CanConfigure;
             Panel(new Rect(1126,32,450,836),new Color(.045f,.075f,.105f));
             Label(1146,48,410,35,"ARSENAL / 銃と効果",_title);
-            var state=sim.Editing?"PAUSED / Rで再開":sim.Bursting?$"射出中：あと{sim.RemainingInBurst}発":sim.Ready?$"READY / 次を発射可（残弾{sim.Balls.Count}）":sim.ChallengeState!=MomentumChallengeState.Active?"左のStageを選んで次の挑戦へ":sim.RemainingTargets==0?"全的撃破 / 残弾回収で結果を確定":sim.ChallengeMagazines>=sim.ChallengeLimit?"最終マガジン / 攻撃の決着待ち":sim.ReloadRemaining>0?$"Reload {sim.ReloadRemaining:0.0}s":!sim.HasRoomForMagazine?"弾数上限 / 待機または残弾回収":$"減速待ち / 最大速度 {sim.FastestBallSpeed:0}";
+            var state=sim.Editing?"PAUSED / Rで再開":sim.Bursting?$"射出中：あと{sim.RemainingInBurst}発 / マウスで照準":sim.Ready?$"READY / 次を発射可（残弾{sim.Balls.Count}）":sim.ChallengeState!=MomentumChallengeState.Active?"左のStageを選んで次の挑戦へ":sim.RemainingTargets==0?"全的撃破 / 残弾回収で結果を確定":sim.ChallengeMagazines>=sim.ChallengeLimit?"最終マガジン / 攻撃の決着待ち":sim.ReloadRemaining>0?$"Reload {sim.ReloadRemaining:0.0}s":!sim.HasRoomForMagazine?"弾数上限 / 待機または残弾回収":$"減速待ち / 最大速度 {sim.FastestBallSpeed:0}";
             Label(1146,91,410,28,state,_body);
             if(ActionButton(new Rect(1146,128,410,36),"残弾回収 [Space] / 残りの攻撃を放棄",!sim.Editing && (sim.Bursting || sim.Balls.Count>0))) RecallVolley();
             if(ActionButton(new Rect(1146,176,200,44),(p.gun==0?"● ":"")+"REVOLVER / 6発",free)) { p.SelectGun(0); SaveProgress(); }
             if(ActionButton(new Rect(1356,176,200,44),p.uziUnlocked?(p.gun==1?"● ":"")+"UZI / 18発":"UZI開放 / 40 G",free && (p.uziUnlocked || p.gold>=40)))
             { if(!p.uziUnlocked) p.BuyGun(); p.SelectGun(1); SaveProgress(); }
-            var gunInfo=p.gun==0?"太い6発 / 基礎48・初速780 / 間隔0.12秒":"小さい18発 / 基礎17・初速1050 / 間隔0.05秒";
+            var gunInfo=(p.gun==0?"太い6発 / 基礎48・初速780":"小さい18発 / 基礎17・初速1050")+$" / 間隔{MomentumSimulation.ShotInterval(p.gun):0.##}秒";
             Label(1146,230,410,42,$"{gunInfo}\n再射撃：全弾速度{MomentumSimulation.RefireSpeed:0}以下＋Reload完了",_small);
             Label(1146,270,410,30,$"効果容量 {MomentumProgress.Used(p.equippedMods)} / 20 pt",_title);
             for(var i=0;i<MomentumProgress.Mods.Length;i++)

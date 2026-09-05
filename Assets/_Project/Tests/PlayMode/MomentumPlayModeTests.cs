@@ -9,6 +9,41 @@ namespace IncrementalGame.Tests.PlayMode
 {
     public sealed class MomentumPlayModeTests
     {
+        [UnityTest] public IEnumerator ControllerSteersFutureShotsButUiAndPauseCannotRedirect()
+        {
+            var root=new GameObject("Steering fixture");root.SetActive(false);
+            var camera=new GameObject("Camera");camera.transform.SetParent(root.transform);camera.AddComponent<Camera>().orthographic=true;
+            var controller=root.AddComponent<MomentumLabController>();controller.PersistenceEnabled=false;
+            try
+            {
+                root.SetActive(true);yield return null;yield return null;
+                controller.enabled=false; // Test explicit inputs, not the user's real cursor.
+                var sim=controller.Simulation;
+                Assert.That(controller.TryFire(new SimVector2(800,200)),Is.True);
+                sim.Targets.Clear();sim.Obstacles.Clear();var first=sim.Balls[0];first.Boosted=true;
+                var oldVelocity=first.Velocity;
+                Assert.That(controller.SteerBurst(new SimVector2(1050,815)),Is.True);
+                Assert.That(first.Velocity,Is.EqualTo(oldVelocity));var direction=sim.BurstAim;
+                Assert.That(controller.SteerBurst(new SimVector2(1250,400)),Is.False);
+                Assert.That(controller.SteerBurst(new SimVector2(200,400)),Is.False);
+                Assert.That(sim.BurstAim,Is.EqualTo(direction));
+                controller.SendMessage("OnApplicationFocus",false);
+                Assert.That(controller.SteerBurst(new SimVector2(550,815)),Is.False);
+                controller.SendMessage("OnApplicationFocus",true);
+                yield return null;yield return null;
+                controller.SetEditing(true);Assert.That(controller.SteerBurst(new SimVector2(550,815)),Is.False);
+                controller.SetEditing(false);Assert.That(controller.SteerBurst(new SimVector2(550,815)),Is.False,"Pause-close guard");
+                for(var i=0;i<24;i++) controller.StepSimulation(1.0/60);
+                Assert.That(sim.FiredCount,Is.EqualTo(2));
+                Assert.That(sim.Balls.Find(b=>b.Id==2).Velocity.Normalized.X,Is.GreaterThan(.99));
+                yield return null;yield return null;
+                Assert.That(controller.SteerBurst(new SimVector2(550,815)),Is.True);
+                for(var i=0;i<24;i++) controller.StepSimulation(1.0/60);
+                Assert.That(sim.Balls.Find(b=>b.Id==3).Velocity.Normalized.X,Is.LessThan(-.99));
+            }
+            finally { Object.Destroy(root); }
+            yield return null;
+        }
         [UnityTest] public IEnumerator BrakingShrinksVisualsAndAfterglowNeverExtendsAttack()
         {
             var root=new GameObject("Brake view fixture");
@@ -140,11 +175,15 @@ namespace IncrementalGame.Tests.PlayMode
             try
             {
                 root.SetActive(true); yield return null; yield return null;
+                // This fixture tests refire, not combat balance: keep an encounter
+                // alive during the longer burst and use only explicit test input.
+                controller.enabled=false;
+                foreach(var target in controller.Simulation.Targets) target.Hp=1000000;
                 Assert.That(controller.Simulation.Layout.Width / controller.Simulation.Layout.Height, Is.EqualTo(3.0 / 4));
                 Assert.That(controller.TryFire(new SimVector2(200, 400)), Is.False, "Left telemetry must not shoot");
                 Assert.That(controller.TryFire(new SimVector2(1250, 400)), Is.False, "Right loadout must not shoot");
                 Assert.That(controller.TryFire(new SimVector2(940, 200)), Is.True);
-                for (var i = 0; i < 40; i++) controller.StepSimulation(1.0 / 60);
+                for (var i = 0; i < 130; i++) controller.StepSimulation(1.0 / 60);
                 Assert.That(controller.Simulation.FiredCount, Is.EqualTo(6));
                 controller.SetEditing(true); var time = controller.Simulation.Time;
                 controller.StepSimulation(1.0 / 60); Assert.That(controller.Simulation.Time, Is.EqualTo(time));
@@ -158,7 +197,7 @@ namespace IncrementalGame.Tests.PlayMode
                 var tail=new MomentumBall { Id=999, MagazineId=1, Position=new SimVector2(800,780), Velocity=new SimVector2(0,-300), ExpiresAt=10, Boosted=true };
                 sim.Balls.Add(tail);
                 Assert.That(controller.TryFire(new SimVector2(200,400)),Is.False,"UI still must not fire when READY with a tail");
-                Assert.That(controller.TryFire(new SimVector2(940,200)),Is.True);
+                Assert.That(controller.TryFire(new SimVector2(940,200)),Is.True,$"ready={sim.Ready} state={sim.ChallengeState} targets={sim.RemainingTargets} time={sim.Time} reload={sim.ReloadRemaining} bursting={sim.Bursting}");
                 Assert.That(sim.Balls.Contains(tail),Is.True); Assert.That(sim.ChallengeMagazines,Is.EqualTo(2));
                 controller.StepSimulation(1.0/60);
                 Assert.That(controller.NeonView.FlightCount,Is.EqualTo(sim.Balls.Count));
