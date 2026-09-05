@@ -109,7 +109,7 @@ namespace IncrementalGame.Core
             for (var i = 0; i < 2; i++)
             {
                 var child = new MomentumBall { Id = ++_nextBallId, MagazineId = ball.MagazineId, Ammo = ball.Ammo,
-                    Position = ball.Position, Velocity = AimCalculator.RotateDegrees(ball.Velocity, i == 0 ? -18 : 18),
+                    Position = ball.Position, Velocity = AimCalculator.RotateDegrees(ball.Velocity, i == 0 ? -18 : 18) * ball.Speed,
                     Radius = Math.Max(2, ball.Radius * .85), DamageScale = ball.DamageScale * .55, ResistanceScale = ball.ResistanceScale,
                     Mods = ball.Mods, Golden = ball.Golden, Generation = ball.Generation + 1, Boosted = ball.Boosted, ExpiresAt = ball.ExpiresAt };
                 foreach (var id in ball.Exiting) child.Exiting.Add(id);

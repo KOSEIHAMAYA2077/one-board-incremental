@@ -96,7 +96,8 @@ namespace IncrementalGame.Tests.EditMode
             var b=new MomentumBall { Id=100, Generation=3, Mods=MomentumMod.Split, Position=new SimVector2(800,345), Velocity=new SimVector2(0,-900), ExpiresAt=10 };
             sim.Balls.Add(b); sim.Tick(1.0/60);
             Assert.That(sim.Balls.Count,Is.EqualTo(2));
-            foreach(var child in sim.Balls) { Assert.That(child.Generation,Is.EqualTo(4)); Assert.That(child.ExpiresAt,Is.EqualTo(10)); Assert.That(child.DamageScale,Is.EqualTo(.55)); }
+            foreach(var child in sim.Balls) { Assert.That(child.Generation,Is.EqualTo(4)); Assert.That(child.ExpiresAt,Is.EqualTo(10)); Assert.That(child.DamageScale,Is.EqualTo(.55)); Assert.That(child.Speed,Is.EqualTo(b.Speed).Within(.001)); }
+            sim.Tick(1.0/60); Assert.That(sim.Balls.Count,Is.EqualTo(2),"Children must survive their next tick");
         }
         [Test] public void GoldenMarkPaysOnceAndBlastDoesNotRecursivelyTrigger()
         {

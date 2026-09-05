@@ -26,7 +26,7 @@ namespace IncrementalGame.Presentation
         private readonly Dictionary<GUIStyle, GUIStyle> _scaled = new Dictionary<GUIStyle, GUIStyle>();
         private readonly List<string> _overflows = new List<string>();
         private float _scale;
-        private bool _focus = true, _diagnostic;
+        private bool _focus = true, _diagnostic, _stressDiagnostic;
         private int _blockedFrame, _heardShots, _lastGold;
         private string _message = "一クリックで三発。水色の動くゾーンに通してみよう。";
         private string _logPath;
@@ -36,8 +36,10 @@ namespace IncrementalGame.Presentation
         private void Awake()
         {
             _diagnostic = Array.IndexOf(Environment.GetCommandLineArgs(), "-momentum-capture") >= 0;
+            _stressDiagnostic = _diagnostic && Array.IndexOf(Environment.GetCommandLineArgs(), "-momentum-stress") >= 0;
             if (_diagnostic) { PersistenceEnabled = false; Application.runInBackground = true; }
-            Simulation = new MomentumSimulation(progress: LoadProgress());
+            var progress = _stressDiagnostic ? new MomentumProgress { gold=1000, highestStage=2, powerLevel=5, uziUnlocked=true, gun=1, unlockedMods=15, equippedMods=15 } : LoadProgress();
+            Simulation = new MomentumSimulation(progress: progress);
             _camera = GetComponentInChildren<Camera>(); _audio = GetComponent<PrototypeAudio>();
             Time.fixedDeltaTime = 1f / 60; Application.targetFrameRate = 120;
             BuildBoard();
@@ -264,6 +266,16 @@ namespace IncrementalGame.Presentation
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;
             TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
+            var peakBalls=0; var maxFrameMs=0f; var totalFrameMs=0f;
+            if (_stressDiagnostic)
+            {
+                for(var frame=0;frame<240;frame++)
+                {
+                    peakBalls=Math.Max(peakBalls,Simulation.Balls.Count);
+                    if(frame>=10) { var ms=Time.unscaledDeltaTime*1000; maxFrameMs=Mathf.Max(maxFrameMs,ms); totalFrameMs+=ms; }
+                    yield return null;
+                }
+            }
             for (var i = 0; i < 35; i++) StepSimulation(1.0 / 60);
             var fired = Simulation.FiredCount; var boost = Simulation.BoostCount;
             CaptureBoard(Path.Combine(folder, "01-flight-board.png"));
@@ -272,9 +284,9 @@ namespace IncrementalGame.Presentation
             SetEditing(true); var before = Simulation.Time; StepSimulation(1.0 / 60); var paused = before == Simulation.Time;
             yield return new WaitForEndOfFrame(); var editorOverflow = string.Join("\n", _overflows);
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
-            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
+            File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nStress={_stressDiagnostic}; peakBalls={peakBalls}; meanFrameMs={totalFrameMs/230:0.00}; maxFrameMs={maxFrameMs:0.00}; suppressedSplits={Simulation.SuppressedSplits}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
-            Application.Quit(fired > 0 && boost > 0 && paused && Simulation.FiredCount == 6 && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
+            Application.Quit(fired > 0 && boost > 0 && paused && Simulation.FiredCount == (_stressDiagnostic?18:6) && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private void CaptureBoard(string path)
         {
