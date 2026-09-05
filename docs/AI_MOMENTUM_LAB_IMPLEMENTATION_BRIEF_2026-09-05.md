@@ -1,5 +1,18 @@
 # MOMENTUM LAB：速度を使い切る三発マガジン
 
+## 最新実装：0.5.0-challenge
+
+現在の正本はMaster v0.7.0 §33。以下の旧版記述は復元用として保持し，競合する現在仕様は§33を優先する。
+
+- 実装範囲：3:4の広い中央Stage，小さい的12個，奥のバンパー，明るい結晶面・命中／破壊演出。
+- 全弾待機と飛行中Reload，Space回収，親子全体で10秒寿命。子も分裂可，世代上限なし。256同時／1024生成上限時は親弾継続，UIに制限表示。
+- Revolver6発とUZI18発，全弾Modifier7種類，容量20，無料付け替え，Preset3個。
+- 3Stage，初期3マガジンChallenge，携行上限と基礎火力のGold強化，1マガジンClearの特殊効果，永続Saveと旧Save保護。
+- 数値・効果継承・失敗判定・価格・保存仕様は§33.1〜33.4。大規模な成長曲線やAscensionは含めない。
+- 検証：旧Core Test維持，100Seed×3Stageの全数配置，残弾待機，回収の未射出取消，HP継続，最後のマガジン解決，Mastery，容量，Preset／Save validation，再分裂・寿命継承・上限，Golden二重報酬防止，爆発非再帰。PlayModeで表示不変・UI誤射・Pause，Windows Build，FHD診断画像と文字Overflowを確認。
+
+## 旧版の復元用仕様
+
 Master v0.6.0 §32が今回のGame Logic正本．旧章との競合は§32を優先するが，旧Prototypeへ遡及適用しない．Game Version 0.4.0-momentum，Unity 6000.3.18f1，FHD Windows x64．
 
 ## 今回実装するもの

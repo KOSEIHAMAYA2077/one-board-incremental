@@ -9,6 +9,16 @@ namespace IncrementalGame.Tests.PlayMode
 {
     public sealed class MomentumPlayModeTests
     {
+        [Test] public void ProgressJsonRoundTripsOwnershipAndPresets()
+        {
+            var p=new MomentumProgress { gold=150 };
+            p.BuyGun(); p.SelectGun(1); p.BuyMod(MomentumMod.Split); p.Toggle(MomentumMod.Split);
+            p.BuyMagazine(); p.Complete(0,1); p.StorePreset(2);
+            var copy=JsonUtility.FromJson<MomentumProgress>(JsonUtility.ToJson(p));
+            Assert.That(copy.Valid(),Is.True); Assert.That(copy.gold,Is.EqualTo(p.gold));
+            Assert.That(copy.masteryMask,Is.EqualTo(1)); Assert.That(copy.MagazineLimit,Is.EqualTo(4));
+            copy.SelectGun(0); copy.LoadPreset(2); Assert.That(copy.gun,Is.EqualTo(1)); Assert.That(copy.Has(MomentumMod.Split),Is.True);
+        }
         [UnityTest] public IEnumerator NeonViewIsThreeDimensionalAndDoesNotChangeSimulation()
         {
             var root = new GameObject("Neon fixture"); root.SetActive(false);
@@ -20,7 +30,7 @@ namespace IncrementalGame.Tests.PlayMode
                 root.SetActive(true); yield return null; yield return null;
                 controller.SetEditing(true);
                 var sim = controller.Simulation; var time = sim.Time; var gold = sim.Gold;
-                Assert.That(controller.NeonView.TargetCount, Is.EqualTo(7));
+                Assert.That(controller.NeonView.TargetCount, Is.EqualTo(12));
                 Assert.That(controller.NeonView.CrystalDepth, Is.GreaterThan(.2f));
                 Assert.That(controller.NeonView.GetComponentsInChildren<Collider>().Length, Is.Zero);
                 Assert.That(controller.NeonView.GetComponentsInChildren<Collider2D>().Length, Is.Zero);
@@ -42,12 +52,12 @@ namespace IncrementalGame.Tests.PlayMode
                 for(var i=0;i<800;i++) controller.StepSimulation(1.0/60);
                 Assert.That(controller.NeonView.FlightCount, Is.Zero);
                 Assert.That(controller.NeonView.SparkCount, Is.Zero);
-                Assert.That(sim.FiredCount, Is.EqualTo(3));
+                Assert.That(sim.FiredCount, Is.EqualTo(6));
             }
             finally { Object.Destroy(root); }
             yield return null;
         }
-        [UnityTest] public IEnumerator ControllerFiresThreeAndEditingBlocksCloseClick()
+        [UnityTest] public IEnumerator ControllerFiresSixAndEditingBlocksCloseClick()
         {
             var root = new GameObject("Momentum fixture"); root.SetActive(false);
             var cameraObj = new GameObject("Camera"); cameraObj.transform.SetParent(root.transform);
@@ -56,12 +66,12 @@ namespace IncrementalGame.Tests.PlayMode
             try
             {
                 root.SetActive(true); yield return null; yield return null;
-                Assert.That(controller.Simulation.Layout.Width / controller.Simulation.Layout.Height, Is.EqualTo(9.0 / 16));
+                Assert.That(controller.Simulation.Layout.Width / controller.Simulation.Layout.Height, Is.EqualTo(3.0 / 4));
                 Assert.That(controller.TryFire(new SimVector2(200, 400)), Is.False, "Left telemetry must not shoot");
                 Assert.That(controller.TryFire(new SimVector2(1250, 400)), Is.False, "Right loadout must not shoot");
                 Assert.That(controller.TryFire(new SimVector2(940, 200)), Is.True);
-                for (var i = 0; i < 20; i++) controller.StepSimulation(1.0 / 60);
-                Assert.That(controller.Simulation.FiredCount, Is.EqualTo(3));
+                for (var i = 0; i < 40; i++) controller.StepSimulation(1.0 / 60);
+                Assert.That(controller.Simulation.FiredCount, Is.EqualTo(6));
                 controller.SetEditing(true); var time = controller.Simulation.Time;
                 controller.StepSimulation(1.0 / 60); Assert.That(controller.Simulation.Time, Is.EqualTo(time));
                 controller.SetEditing(false); Assert.That(controller.TryFire(new SimVector2(940, 200)), Is.False);

@@ -8,11 +8,13 @@ namespace IncrementalGame.Core
     public sealed class MomentumTarget
     {
         public int Id; public bool Armored; public SimVector2 Position;
-        public double Hp;
-        public double MaximumHp => Armored ? 90 : 50;
-        public double Radius => Armored ? 42 : 34;
+        public double Hp, HpOverride, RadiusScale = 1;
+        public int RewardBonus;
+        public bool GoldenMarked;
+        public double MaximumHp => HpOverride > 0 ? HpOverride : Armored ? 90 : 50;
+        public double Radius => (Armored ? 42 : 34) * RadiusScale;
         public double Resistance => Armored ? 420 : 150;
-        public int Reward => Armored ? 7 : 3;
+        public int Reward => (Armored ? 7 : 3) + RewardBonus;
         public bool Alive => Hp > 0;
     }
     public sealed class MomentumObstacle { public int Id; public SimVector2 Position; public const double Radius = 26; }
@@ -23,6 +25,12 @@ namespace IncrementalGame.Core
         public SimVector2 Position, Velocity;
         public bool Alive = true, Boosted;
         public double PendingTime;
+        public double Radius = MomentumRules.Radius, DamageScale = 1, ResistanceScale = 1;
+        public double ExpiresAt = double.PositiveInfinity;
+        public MomentumMod Mods;
+        public bool Golden, HasSplit, HasBlasted;
+        public int Generation;
+        public readonly HashSet<int> HitTargets = new HashSet<int>();
         public readonly HashSet<int> Exiting = new HashSet<int>();
         public double Speed => Velocity.Magnitude;
     }
@@ -64,7 +72,7 @@ namespace IncrementalGame.Core
         }
     }
 
-    public sealed class MomentumSimulation
+    public sealed partial class MomentumSimulation
     {
         public const uint DefaultSeed = 20260905;
         public readonly List<MomentumTarget> Targets = new List<MomentumTarget>();
@@ -81,7 +89,8 @@ namespace IncrementalGame.Core
         private double _nextShotTime, _readyAt;
         public uint Seed { get; }
         public double Time { get; private set; }
-        public int Gold { get; private set; }
+        private int _gold;
+        public int Gold => Progress == null ? _gold : Progress.gold;
         public int MagazineCount { get; private set; }
         public int FiredCount { get; private set; }
         public int DestroyedCount { get; private set; }
@@ -89,18 +98,21 @@ namespace IncrementalGame.Core
         public bool Editing { get; private set; }
         public IReadOnlyList<MomentumAmmo> Magazine => Array.AsReadOnly(_magazine);
         public bool Bursting => _firing != null;
-        public int RemainingInBurst => _firing == null ? 0 : 3 - _nextSlot;
-        public bool Ready => !Editing && !Bursting && Time >= _readyAt;
+        public int RemainingInBurst => _firing == null ? 0 : _firing.Length - _nextSlot;
+        public bool Ready => !Editing && !Bursting && Time >= _readyAt && (Progress == null || Balls.Count == 0 && ChallengeState == MomentumChallengeState.Active && ChallengeMagazines < ChallengeLimit);
         public double ReloadRemaining => Math.Max(0, _readyAt - Time);
         public SimVector2 ZonePosition => Layout.ZoneAt(Time);
 
-        public MomentumSimulation(uint seed = DefaultSeed, MomentumBoardLayout layout = null)
+        public MomentumSimulation(uint seed = DefaultSeed, MomentumBoardLayout layout = null, MomentumProgress progress = null)
         {
-            Layout = layout ?? MomentumBoardLayout.Landscape;
+            if (progress != null && !progress.Valid()) throw new ArgumentException("Invalid progress", nameof(progress));
+            Progress = progress;
+            Layout = layout ?? (progress == null ? MomentumBoardLayout.Landscape : MomentumBoardLayout.Arena);
             Seed = seed; _layoutRandom = new DeterministicRandom(seed); _shotRandom = new DeterministicRandom(seed ^ 0x93A5612Bu);
             for (var i = 0; i < 2; i++)
                 Obstacles.Add(new MomentumObstacle { Id = 101 + i, Position = Layout.ObstaclePosition(i, _layoutRandom.NextUnitDouble()) });
-            for (var i = 0; i < 7; i++) Targets.Add(new MomentumTarget { Id = i + 1, Armored = i >= 4 });
+            for (var i = 0; i < (progress == null ? 7 : 12); i++) Targets.Add(new MomentumTarget { Id = i + 1, Armored = i >= 4 });
+            if (progress != null) { StartChallenge(0); return; }
             RefillTargets();
         }
         public void SetEditing(bool editing) { Editing = editing; }
@@ -113,18 +125,22 @@ namespace IncrementalGame.Core
         public bool TryFire(SimVector2 aim)
         {
             if (!Ready || !MomentumRules.Finite(aim.X) || !MomentumRules.Finite(aim.Y) || (aim - Layout.Gun).Magnitude < 30) return false;
-            RefillTargets();
+            if (Progress == null) RefillTargets();
             _aim = (aim - Layout.Gun).Normalized;
-            _firing = (MomentumAmmo[])_magazine.Clone(); _nextSlot = 0; _nextShotTime = Time; MagazineCount++;
+            _firing = (MomentumAmmo[])_magazine.Clone();
+            if (Progress != null) PrepareVolley();
+            _nextSlot = 0; _nextShotTime = Time; MagazineCount++;
             FireNext(); return true;
         }
         private void FireNext()
         {
-            Balls.Add(new MomentumBall { Id = ++_nextBallId, MagazineId = MagazineCount, Ammo = _firing[_nextSlot++],
-                Position = Layout.Gun, Velocity = AimCalculator.RotateDegrees(_aim, _shotRandom.NextSignedOffset(2)) * MomentumRules.LaunchSpeed });
+            var ball = new MomentumBall { Id = ++_nextBallId, MagazineId = MagazineCount, Ammo = _firing[_nextSlot++],
+                Position = Layout.Gun, Velocity = AimCalculator.RotateDegrees(_aim, _shotRandom.NextSignedOffset(2)) * MomentumRules.LaunchSpeed };
+            if (Progress != null) ConfigureBall(ball, _nextSlot);
+            Balls.Add(ball);
             FiredCount++;
-            if (_nextSlot == 3) { _firing = null; _readyAt = Time + .8; }
-            else _nextShotTime += .12; // Preserve cadence instead of accumulating fixed-tick rounding.
+            if (_nextSlot == _firing.Length) { _firing = null; _readyAt = Time + .8; }
+            else _nextShotTime += Progress == null ? .12 : _volleyGun == 0 ? .12 : .05;
         }
         public void Tick(double seconds)
         {
@@ -134,8 +150,11 @@ namespace IncrementalGame.Core
             Time += seconds;
             Stats.Advance(Time);
             if (Bursting && Time + 1e-9 >= _nextShotTime) FireNext();
-            foreach (var ball in Balls) if (ball.Alive) Step(ball, seconds);
+            var existing = Balls.Count;
+            for (var i = 0; i < existing; i++) if (Balls[i].Alive) Step(Balls[i], seconds);
+            Balls.AddRange(_children); _children.Clear();
             Balls.RemoveAll(b => !b.Alive);
+            ResolveChallenge();
         }
         public bool PositionAvailable(SimVector2 position, double radius, int ignoredTarget = 0)
         {
@@ -155,7 +174,7 @@ namespace IncrementalGame.Core
             foreach (var target in Targets)
             {
                 if (target.Alive) continue;
-                for (var attempt = 0; attempt < 200; attempt++)
+                for (var attempt = 0; attempt < 2000; attempt++)
                 {
                     var p = Layout.TargetCandidate(_layoutRandom.NextUnitDouble(), _layoutRandom.NextUnitDouble());
                     if (!PositionAvailable(p, target.Radius, target.Id)) continue;
@@ -178,7 +197,7 @@ namespace IncrementalGame.Core
             var best = new Contact();
             foreach (var target in Targets)
             {
-                var delta = ball.Position - target.Position; var radius = target.Radius + MomentumRules.Radius;
+                var delta = ball.Position - target.Position; var radius = target.Radius + ball.Radius;
                 if (!target.Alive) { ball.Exiting.Remove(target.Id); continue; }
                 if (ball.Exiting.Contains(target.Id))
                 { if (delta.Magnitude > radius + .1) ball.Exiting.Remove(target.Id); else continue; }
@@ -188,20 +207,20 @@ namespace IncrementalGame.Core
             foreach (var obstacle in Obstacles)
             {
                 var delta = ball.Position - obstacle.Position;
-                if (MomentumRules.SweepCircle(delta, ball.Velocity, MomentumObstacle.Radius + MomentumRules.Radius, remaining, out var t))
+                if (MomentumRules.SweepCircle(delta, ball.Velocity, MomentumObstacle.Radius + ball.Radius, remaining, out var t))
                     Consider(ref best, t, 1, obstacle.Id, (delta + ball.Velocity * t).Normalized);
             }
             var v = ball.Velocity; var p = ball.Position;
-            Wall(ref best, v.X < 0 ? (Layout.Left + MomentumRules.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 1, new SimVector2(1, 0));
-            Wall(ref best, v.X > 0 ? (Layout.Right - MomentumRules.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 2, new SimVector2(-1, 0));
-            Wall(ref best, v.Y < 0 ? (Layout.Top + MomentumRules.Radius - p.Y) / v.Y : double.PositiveInfinity, remaining, 3, new SimVector2(0, 1));
-            Wall(ref best, v.Y > 0 ? (Layout.Bottom - MomentumRules.Radius - p.Y) / v.Y : double.PositiveInfinity, remaining, 4, new SimVector2(0, -1));
+            Wall(ref best, v.X < 0 ? (Layout.Left + ball.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 1, new SimVector2(1, 0));
+            Wall(ref best, v.X > 0 ? (Layout.Right - ball.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 2, new SimVector2(-1, 0));
+            Wall(ref best, v.Y < 0 ? (Layout.Top + ball.Radius - p.Y) / v.Y : double.PositiveInfinity, remaining, 3, new SimVector2(0, 1));
+            Wall(ref best, v.Y > 0 ? (Layout.Bottom - ball.Radius - p.Y) / v.Y : double.PositiveInfinity, remaining, 4, new SimVector2(0, -1));
             if (!ball.Boosted)
             {
                 var start = Layout.ZoneAt(tickStart);
                 var zoneVelocity = (Layout.ZoneAt(tickStart + tickDuration) - start) / tickDuration;
                 var relative = p - (start + zoneVelocity * elapsedTime);
-                if (MomentumRules.SweepCircle(relative, v - zoneVelocity, MomentumRules.ZoneRadius + MomentumRules.Radius, remaining, out var t))
+                if (MomentumRules.SweepCircle(relative, v - zoneVelocity, MomentumRules.ZoneRadius + ball.Radius, remaining, out var t))
                     Consider(ref best, t, 3, 1, default);
             }
             return best;
@@ -210,6 +229,7 @@ namespace IncrementalGame.Core
         { if (time >= -1e-9 && time <= remaining) Consider(ref best, Math.Max(time, 0), 2, id, normal); }
         private void Step(MomentumBall ball, double seconds)
         {
+            if (Time >= ball.ExpiresAt) { ball.Alive = false; return; }
             SetSpeed(ball, ball.Speed - MomentumRules.Drag * seconds);
             if (!ball.Alive) return;
             var remaining = seconds + ball.PendingTime; ball.PendingTime = 0;
@@ -221,18 +241,12 @@ namespace IncrementalGame.Core
                 ball.Position += ball.Velocity * hit.Time; remaining -= hit.Time; elapsed += hit.Time;
                 if (hit.Priority == 0)
                 {
-                    var damage = MomentumRules.Damage(ball.Ammo, ball.Speed);
-                    var appliedDamage = Math.Min(hit.Target.Hp, damage);
-                    hit.Target.Hp = Math.Max(0, hit.Target.Hp - damage);
-                    Stats.Record(Time, appliedDamage, damage, ball.Ammo);
-                    Events.Add(new MomentumEvent("hit", hit.Target.Position, damage, hit.Target.Id));
-                    if (!hit.Target.Alive)
-                    {
-                        Gold += hit.Target.Reward; DestroyedCount++;
-                        Events.Add(new MomentumEvent("destroy", hit.Target.Position, hit.Target.Reward, hit.Target.Id));
-                    }
+                    var damage = MomentumRules.Damage(ball.Ammo, ball.Speed) * ball.DamageScale;
+                    ApplyDamage(hit.Target, ball, damage);
                     ball.Exiting.Add(hit.Target.Id);
-                    SetSpeed(ball, MomentumRules.ExitSpeed(ball.Ammo, ball.Speed, hit.Target.Resistance));
+                    ball.HitTargets.Add(hit.Target.Id);
+                    SetSpeed(ball, MomentumRules.ExitSpeed(ball.Ammo, ball.Speed, hit.Target.Resistance * ball.ResistanceScale));
+                    TriggerEffects(ball, hit.Target, damage);
                 }
                 else if (hit.Priority == 3)
                 {

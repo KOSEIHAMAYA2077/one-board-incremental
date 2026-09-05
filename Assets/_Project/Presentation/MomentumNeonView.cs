@@ -17,6 +17,7 @@ namespace IncrementalGame.Presentation
         private MeshRenderer _zoneAura;
         private double _lastTime = -1;
         private MaterialPropertyBlock _block;
+        private readonly System.Random _visualRandom = new System.Random(85137);
         private static readonly Color Cyan = new Color(.08f, .8f, 1f);
         private static readonly Color Green = new Color(.3f, 1f, .23f);
         private static readonly Color Orange = new Color(1f, .27f, .055f);
@@ -39,7 +40,7 @@ namespace IncrementalGame.Presentation
             _quad.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
             _quad.triangles = new[] { 0,1,2,0,2,3 }; _quad.RecalculateBounds(); _meshes.Add(_quad);
             RouteDrawing.Shape(transform, "Neon black floor", Vector2.zero, new Vector2(16,9), new Color(.009f,.014f,.026f), false, -20);
-            RouteDrawing.Shape(transform, "Inset arena", World((left+right)/2,(top+bottom)/2), new Vector2((right-left)/100,(bottom-top)/100), new Color(.013f,.024f,.043f), false, -15);
+            RouteDrawing.Shape(transform, "Inset arena", World((left+right)/2,(top+bottom)/2), new Vector2((right-left)/100,(bottom-top)/100), new Color(.075f,.14f,.19f), false, -15);
             // The sparse grid is deliberately dim so the moving shots remain the focus.
             for (var x = left+40; x < right; x += 80) Line(transform, "Floor grid", new[] { World(x,top), World(x,bottom) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
             for (var y = top+40; y < bottom; y += 80) Line(transform, "Floor grid", new[] { World(left,y), World(right,y) }, new Color(.06f,.16f,.22f,.22f), .006f, -10);
@@ -47,9 +48,10 @@ namespace IncrementalGame.Presentation
             foreach (var t in sim.Targets)
             {
                 var root = Node("Crystal target " + t.Id, transform);
-                var c = t.Armored ? Orange : Green;
+                var c = t.Armored ? new Color(1,.61f,.28f) : new Color(.4f,1,.83f);
                 var radius = (float)t.Radius / 100;
                 var aura = Glow(root, "Soft halo", Vector3.zero, radius * 2.1f, WithAlpha(c,.45f), 1);
+                var shadow = RouteDrawing.Shape(root,"Crystal floor shadow",new Vector2(.055f,-.09f),new Vector2(radius*1.8f,radius*1.7f),new Color(.005f,.015f,.03f,.6f),true,0);
                 var body = MeshObject(root, "Bevelled 3D crystal", _crystal, _crystalMaterial, 4);
                 body.transform.localScale = Vector3.one * radius; Tint(body,c);
                 var rim = Polygon(radius,8);
@@ -57,7 +59,7 @@ namespace IncrementalGame.Presentation
                 // This faint ring corresponds exactly to the unchanged circular hit area.
                 Line(root,"Collision footprint",Polygon(radius,64),WithAlpha(c,.38f),.008f,3,true);
                 if (t.Armored) GlowLine(root,"Armor inner band",Polygon(radius*.77f,8),new Color(1,.67f,.23f),.012f,6,true);
-                _targets.Add(t.Id,new Crystal { Root=root, Body=body, Aura=aura, Color=c });
+                _targets.Add(t.Id,new Crystal { Root=root, Body=body, Aura=aura, Color=c, Radius=radius });
             }
             foreach(var obstacle in sim.Obstacles)
             {
@@ -96,17 +98,17 @@ namespace IncrementalGame.Presentation
         {
             foreach(var e in sim.Events)
             {
-                if(e.Kind=="hit" && _targets.TryGetValue(e.Target,out var t)) t.Flash=.13f;
-                var count=e.Kind=="destroy"?12:e.Kind=="boost"?6:3;
+                if(e.Kind=="hit" && _targets.TryGetValue(e.Target,out var t)) { t.Flash=.25f; t.Kick=(float)(_visualRandom.NextDouble()*2-1); }
+                var count=e.Kind=="destroy"?24:e.Kind=="boost"?6:e.Kind=="blast"?28:5;
                 var c=e.Kind=="boost"?Cyan:e.Kind=="destroy"?Orange:Green;
-                for(var i=0;i<count && _sparks.Count<96;i++)
+                for(var i=0;i<count && _sparks.Count<192;i++)
                 {
                     // Local deterministic geometry, independent of the game's RNG state.
-                    var angle=i*2.39996f+(float)sim.Time;
+                    var angle=(float)_visualRandom.NextDouble()*Mathf.PI*2;
                     var mesh=MeshObject(transform,"Transient crystal shard",_diamond,_crystalMaterial,8);
                     mesh.transform.position=LogicalSpace.ToWorld(e.Position);
-                    var size=e.Kind=="destroy"?.065f:.035f; mesh.transform.localScale=Vector3.one*size;
-                    _sparks.Add(new Spark { Mesh=mesh, Velocity=new Vector3(Mathf.Cos(angle),Mathf.Sin(angle),0)*(e.Kind=="destroy"?1.5f:.7f), Life=.45f, Color=c, Size=size });
+                    var size=(e.Kind=="destroy"?.095f:.045f)*(.5f+(float)_visualRandom.NextDouble()); mesh.transform.localScale=Vector3.one*size;
+                    _sparks.Add(new Spark { Mesh=mesh, Velocity=new Vector3(Mathf.Cos(angle),Mathf.Sin(angle),-.8f)*(e.Kind=="destroy"?1.8f:.8f), Life=.8f, Color=Color.Lerp(c,Color.white,.5f), Size=size });
                 }
             }
             foreach(var t in _targets.Values) t.Flash=Mathf.Max(0,t.Flash-(float)delta);
@@ -115,9 +117,9 @@ namespace IncrementalGame.Presentation
                 var s=_sparks[i]; s.Life-=(float)delta;
                 if(s.Life<=0) { Destroy(s.Mesh.gameObject); _sparks.RemoveAt(i); continue; }
                 s.Mesh.transform.position+=s.Velocity*(float)delta;
-                s.Mesh.transform.Rotate(0,0,220*(float)delta);
-                s.Mesh.transform.localScale=Vector3.one*s.Size*(s.Life/.45f);
-                Tint(s.Mesh,WithAlpha(s.Color,s.Life/.45f));
+                s.Mesh.transform.Rotate(180*(float)delta,130*(float)delta,220*(float)delta);
+                s.Mesh.transform.localScale=Vector3.one*s.Size*(s.Life/.8f);
+                Tint(s.Mesh,WithAlpha(s.Color,s.Life/.8f));
             }
         }
 
@@ -127,7 +129,13 @@ namespace IncrementalGame.Presentation
             {
                 var view=_targets[t.Id]; view.Root.gameObject.SetActive(t.Alive);
                 view.Root.position=LogicalSpace.ToWorld(t.Position);
-                Tint(view.Body,Color.Lerp(view.Color,Color.white,view.Flash/.13f));
+                view.Root.localScale=Vector3.one*(float)(t.Radius/100)/view.Radius;
+                view.Color=t.GoldenMarked?new Color(1,.9f,.2f):t.Armored?new Color(1,.61f,.28f):new Color(.4f,1,.83f);
+                var flash=view.Flash/.25f;
+                view.Body.transform.localRotation=Quaternion.Euler(flash*15,flash*view.Kick*20,flash*view.Kick*10);
+                view.Body.transform.localPosition=new Vector3(view.Kick*flash*.025f,flash*.03f,-flash*.03f);
+                Tint(view.Body,Color.Lerp(view.Color,Color.white,flash));
+                Tint(view.Aura,WithAlpha(view.Color,.35f+flash*.5f));
             }
             _zone.position=LogicalSpace.ToWorld(sim.ZonePosition);
             Tint(_zoneAura,WithAlpha(Cyan,.34f+.06f*Mathf.Sin((float)sim.Time*3)));
@@ -135,7 +143,7 @@ namespace IncrementalGame.Presentation
             foreach(var b in sim.Balls)
             {
                 alive.Add(b.Id);
-                var c=b.Ammo==MomentumAmmo.Normal?new Color(1,.69f,.13f):new Color(.18f,.73f,1);
+                var c=b.Golden?new Color(1,1,.12f):b.Ammo==MomentumAmmo.Normal?new Color(1,.69f,.13f):new Color(.18f,.73f,1);
                 if(!_flights.TryGetValue(b.Id,out var f))
                 {
                     var root=Node("Neon projectile "+b.Id,transform);
@@ -146,6 +154,7 @@ namespace IncrementalGame.Presentation
                     f=new Flight { Root=root,Body=body,Aura=aura,Trail=trail,Soft=soft }; _flights.Add(b.Id,f);
                 }
                 f.Root.position=LogicalSpace.ToWorld(b.Position);
+                f.Body.transform.localScale=Vector3.one*(float)(b.Radius/100);
                 f.Body.transform.localRotation=Quaternion.Euler(0,0,(float)(-System.Math.Atan2(b.Velocity.Y,b.Velocity.X)*180/System.Math.PI));
                 Tint(f.Body,Color.Lerp(c,Color.white,.65f)); Tint(f.Aura,WithAlpha(c,b.Boosted?.9f:.6f));
                 if(sim.Time!=_lastTime || f.Points.Count==0) { f.Points.Enqueue(f.Root.position); while(f.Points.Count>18) f.Points.Dequeue(); }
@@ -203,21 +212,21 @@ namespace IncrementalGame.Presentation
             for(var i=0;i<sides;i++)
             {
                 var j=(i+1)%sides; var shade=.38f+.25f*(.5f+.5f*Mathf.Cos(i*Mathf.PI*2/sides-2));
-                Triangle(v,colors,tri, new Vector3(0,0,-.32f),top[i]+Vector3.back*.26f,top[j]+Vector3.back*.26f,new Color(shade*.42f,shade*.42f,shade*.42f));
+                Triangle(v,colors,tri, new Vector3(0,0,-.75f),top[i]+Vector3.back*.52f,top[j]+Vector3.back*.52f,new Color(.62f+shade*.4f,.62f+shade*.4f,.62f+shade*.4f));
                 var light=.48f+.48f*(.5f+.5f*Mathf.Cos(i*Mathf.PI*2/sides-2));
                 var c=new Color(light,light,light);
-                Triangle(v,colors,tri,top[i]+Vector3.back*.26f,rim[i],rim[j],c);
-                Triangle(v,colors,tri,top[i]+Vector3.back*.26f,rim[j],top[j]+Vector3.back*.26f,c);
+                Triangle(v,colors,tri,top[i]+Vector3.back*.52f,rim[i],rim[j],c);
+                Triangle(v,colors,tri,top[i]+Vector3.back*.52f,rim[j],top[j]+Vector3.back*.52f,c);
             }
-            // Rotate the actual faceted geometry 3 degrees off top-down (87 degrees to the plane).
-            var tilt=Quaternion.Euler(3,0,0); for(var i=0;i<v.Count;i++) v[i]=tilt*v[i];
+            // Tilt geometry, not the logical plane: pointer and circular footprint stay aligned.
+            var tilt=Quaternion.Euler(22,0,0); for(var i=0;i<v.Count;i++) v[i]=tilt*v[i];
             var mesh=new Mesh { name="Near-top-down bevelled crystal" }; mesh.SetVertices(v); mesh.SetColors(colors); mesh.SetTriangles(tri,0);
             mesh.RecalculateNormals(); mesh.RecalculateBounds(); _meshes.Add(mesh); return mesh;
         }
         private static void Triangle(List<Vector3> v,List<Color> c,List<int> t,Vector3 a,Vector3 b,Vector3 d,Color color)
         { var n=v.Count; v.Add(a);v.Add(b);v.Add(d);c.Add(color);c.Add(color);c.Add(color);t.Add(n);t.Add(n+1);t.Add(n+2); }
         private void OnDestroy() { foreach(var mesh in _meshes) Destroy(mesh); if(_crystalMaterial!=null) Destroy(_crystalMaterial); if(_glowMaterial!=null) Destroy(_glowMaterial); }
-        private sealed class Crystal { public Transform Root; public MeshRenderer Body,Aura; public Color Color; public float Flash; }
+        private sealed class Crystal { public Transform Root; public MeshRenderer Body,Aura; public Color Color; public float Flash,Kick,Radius; }
         private sealed class Flight { public Transform Root; public MeshRenderer Body,Aura; public LineRenderer Trail,Soft; public readonly Queue<Vector3> Points=new Queue<Vector3>(); }
         private sealed class Spark { public MeshRenderer Mesh; public Vector3 Velocity; public float Life,Size; public Color Color; }
     }

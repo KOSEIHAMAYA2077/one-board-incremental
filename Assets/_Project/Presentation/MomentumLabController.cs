@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.4.2-portrait";
+        public const string GameVersion = "0.5.0-challenge";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -37,10 +37,10 @@ namespace IncrementalGame.Presentation
         {
             _diagnostic = Array.IndexOf(Environment.GetCommandLineArgs(), "-momentum-capture") >= 0;
             if (_diagnostic) { PersistenceEnabled = false; Application.runInBackground = true; }
-            Simulation = new MomentumSimulation(layout: MomentumBoardLayout.Portrait);
+            Simulation = new MomentumSimulation(progress: LoadProgress());
             _camera = GetComponentInChildren<Camera>(); _audio = GetComponent<PrototypeAudio>();
             Time.fixedDeltaTime = 1f / 60; Application.targetFrameRate = 120;
-            LoadMagazine(); BuildBoard();
+            BuildBoard();
             _legacyRenderers = GetComponentsInChildren<Renderer>();
             var neon = new GameObject("Neon crystal presentation"); neon.transform.SetParent(transform, false);
             NeonView = neon.AddComponent<MomentumNeonView>(); NeonView.Initialize(Simulation);
@@ -86,7 +86,7 @@ namespace IncrementalGame.Presentation
         public void SetEditing(bool editing)
         {
             Simulation.SetEditing(editing); _blockedFrame = Time.frameCount + 1;
-            if (!editing) SaveMagazine();
+            if (!editing) SaveProgress();
             Log(editing ? "edit_started" : "edit_finished");
         }
         public void SetNeonEnabled(bool enabled)
@@ -113,6 +113,7 @@ namespace IncrementalGame.Presentation
         {
             if (!_focus) return;
             if (Input.GetKeyDown(KeyCode.F2)) SetNeonEnabled(!NeonEnabled);
+            if (Input.GetKeyDown(KeyCode.Space)) RecallVolley();
             if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
             var over = MouseAim(out var aim);
             if (!Simulation.Editing && over && Input.GetMouseButtonDown(0)) TryFire(aim);
@@ -144,6 +145,7 @@ namespace IncrementalGame.Presentation
             for (var i = _popups.Count - 1; i >= 0; i--)
             { _popups[i].Time -= seconds; if (_popups[i].Time <= 0) _popups.RemoveAt(i); }
             NeonView.Advance(Simulation, seconds);
+            SaveProgress();
             SyncViews();
         }
         private void SyncViews()
@@ -153,6 +155,7 @@ namespace IncrementalGame.Presentation
             {
                 var v = _targets[target.Id]; v.Shape.enabled = target.Alive; v.Ring.enabled = target.Alive && target.Armored;
                 v.Shape.transform.position = LogicalSpace.ToWorld(target.Position);
+                v.Shape.transform.localScale = Vector3.one * (float)(target.Radius * 2 / 100);
                 v.Shape.color = Color.Lerp(new Color(.17f, .22f, .26f), TargetColor(target), (float)(target.Hp / target.MaximumHp));
                 SetCircle(v.Ring, target.Position, target.Radius + 5);
             }
@@ -168,6 +171,7 @@ namespace IncrementalGame.Presentation
                     _balls.Add(ball.Id, view);
                 }
                 view.Head.transform.position = LogicalSpace.ToWorld(ball.Position);
+                view.Head.transform.localScale = Vector3.one * (float)(ball.Radius * 2 / 100);
                 view.Head.enabled = !NeonEnabled; view.Trail.enabled = !NeonEnabled;
                 var color = ball.Boosted ? Color.Lerp(AmmoColor(ball.Ammo), Color.white, .5f) : AmmoColor(ball.Ammo);
                 view.Head.color = color; view.Trail.startColor = new Color(color.r, color.g, color.b, .15f); view.Trail.endColor = color;
@@ -248,7 +252,7 @@ namespace IncrementalGame.Presentation
             catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
         private void OnApplicationFocus(bool focus) { _focus = focus || _diagnostic; _blockedFrame = Time.frameCount + 1; }
-        private void OnApplicationQuit() { SaveMagazine(); Log($"end gold={Simulation.Gold} magazines={Simulation.MagazineCount} fired={Simulation.FiredCount}"); }
+        private void OnApplicationQuit() { SaveProgress(); Log($"end gold={Simulation.Gold} magazines={Simulation.MagazineCount} fired={Simulation.FiredCount}"); }
         private IEnumerator Start()
         {
             if (!_diagnostic) yield break;
@@ -260,7 +264,7 @@ namespace IncrementalGame.Presentation
             _focus = true; _blockedFrame = -1;
             TryFire(Simulation.Layout.ZoneAt(Simulation.Time + .2));
             for (var i = 0; i < 35; i++) StepSimulation(1.0 / 60);
-            var three = Simulation.FiredCount == 3; var boost = Simulation.BoostCount;
+            var fired = Simulation.FiredCount; var boost = Simulation.BoostCount;
             CaptureBoard(Path.Combine(folder, "01-flight-board.png"));
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(Path.Combine(folder, "02-full-ui.png"));
@@ -269,7 +273,7 @@ namespace IncrementalGame.Presentation
             SetEditing(false); for (var i = 0; i < 800; i++) StepSimulation(1.0 / 60);
             File.WriteAllText(Path.Combine(folder, "smoke.txt"), $"screen={Screen.width}x{Screen.height}; fired={Simulation.FiredCount}; boosts={boost}; paused={paused}; remaining={Simulation.Balls.Count}; gold={Simulation.Gold}\nPlaying overflow: {playingOverflow}\nEditor overflow: {editorOverflow}");
             yield return new WaitForSecondsRealtime(.2f);
-            Application.Quit(three && boost > 0 && paused && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
+            Application.Quit(fired > 0 && boost > 0 && paused && Simulation.FiredCount == 6 && Simulation.Balls.Count == 0 && NeonView.FlightCount == 0 && NeonView.SparkCount == 0 && playingOverflow.Length == 0 && editorOverflow.Length == 0 ? 0 : 1);
         }
         private void CaptureBoard(string path)
         {
