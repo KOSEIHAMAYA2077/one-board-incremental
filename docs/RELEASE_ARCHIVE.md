@@ -2,7 +2,9 @@
 
 2026-09-05時点。すべて開発中のPrereleaseであり、正式製品版ではない。リポジトリは非公開のまま。
 
-[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：Momentum Lab](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.4.0-momentum)
+[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：Neon Crystal](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.4.1-neon)
+
+追加保存：0.4.1-neon（表示比較版）、Build source `b17fed20df60d3820536ba35d6cc387d1631b71e`。ZIPは`OneBoardMomentumLab-v0.4.1-neon-Windows-x64.zip`、SHA-256は`2b31f82eeefde898c47b378712a7688f398bfbdf9c42beeefb9e0ddf1e8cbfd3`。操作・検証は[新版記録](NEON_CRYSTAL_RELEASE_2026-09-05.md)。以下の6版も引き続き保持する。
 
 | 試作 | 保存タグ | Build source |
 | --- | --- | --- |
@@ -54,4 +56,3 @@
 
 - File: `OneBoardMomentumLab-v0.4.0-momentum-Windows-x64.zip`
 - SHA-256: `7bbb0e3a08654c214ec303c43c76eda885c1f254d08220c59c55ca1a4d917b4c`
-
