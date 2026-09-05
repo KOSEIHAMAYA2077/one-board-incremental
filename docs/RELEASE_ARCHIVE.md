@@ -2,7 +2,9 @@
 
 2026-09-05時点。すべて開発中のPrereleaseであり、正式製品版ではない。リポジトリは非公開のまま。
 
-[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：縦長ステージ](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.4.2-portrait)
+[全Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases) / [最新試作：Challenge Arsenal](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.5.0-challenge)
+
+追加保存：0.5.0-challenge（3:4盤面・連鎖分裂・2銃・有限マガジンChallenge・恒久成長）。Build source `27be90f55280f82d2ed893d1260016def4afe96c`。SHA-256 `cd8a6e14165f639b1b41c83e335e49a9828b845d3fb642d3144e43576f0bf30b`。[操作・検証記録](CHALLENGE_ARSENAL_RELEASE_2026-09-05.md)。旧8版と旧Saveを保持する。
 
 追加保存：0.4.2-portrait（三列UI・中央9:16）、Build source `c5b138a9c978f06e06058cc85fedd6d94cf005e0`。ZIPは`OneBoardMomentumLab-v0.4.2-portrait-Windows-x64.zip`、SHA-256は`67765c29917ded503a1015a00345e3f29dbbdfea8b6f49541e4734cca27b23f0`。[操作・検証記録](PORTRAIT_STAGE_RELEASE_2026-09-05.md)。旧横長版も保持する。
 
