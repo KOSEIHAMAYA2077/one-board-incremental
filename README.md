@@ -1,31 +1,35 @@
 # One Board Incremental
 
-銃から弾を一斉に撃ち出し，反射・加速・貫通・分裂の連鎖と強化を楽しむ，AI駆動のゲーム制作プロジェクト。Unityで小さな試作を積み重ねている段階です。正式製品版ではありません。
+> **試作してみた結果、思い描いていたものと違ったため、いったん開発を止めています。（2026年9月6日）**
+>
+> AI駆動でゲームを作ってみることを目的に、射撃・反射・分裂・強化などを試作しました。遊んで面白い部分もありましたが、当初作りたかった遊びとの違いを感じ、この形での開発はいったん区切ることにしました。
+> 完成品ではなく、試作コード・アセット・提案や判断の変遷を残すための公開リポジトリです。過去の試作も消さずに保存しています。再開や製品化は未定です。
 
 ## まず遊ぶ・開発を見る
 
 - **[Windows実行版：Challenge Arsenal 0.5.0](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.5.0-challenge)**
-- **[開発中のコード：feat/portrait-stage](https://github.com/KOSEIHAMAYA2077/one-board-incremental/tree/feat/portrait-stage)**
+- **[休止時点の最新コード：0.6.1-drag / feat/portrait-stage](https://github.com/KOSEIHAMAYA2077/one-board-incremental/tree/feat/portrait-stage)**
 - [過去の試作も含むダウンロード一覧](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases)
 - [試作の保存記録](https://github.com/KOSEIHAMAYA2077/one-board-incremental/blob/feat/portrait-stage/docs/RELEASE_ARCHIVE.md)
 
-Releaseページの **Assets** から `OneBoardMomentumLab-v0.5.0-challenge-Windows-x64.zip` をダウンロードし，全体を展開して `OneBoardMomentumLab.exe` を起動してください。DataフォルダーとDLLは一緒に置きます。`Source code (zip)` は実行版ではありません。非公開リポジトリのため，アクセス権のあるGitHubアカウントでのログインが必要です。
+Releaseページの **Assets** から `OneBoardMomentumLab-v0.5.0-challenge-Windows-x64.zip` をダウンロードし，全体を展開して `OneBoardMomentumLab.exe` を起動してください。DataフォルダーとDLLは一緒に置きます。`Source code (zip)` は実行版ではありません。**配布済み実行版は0.5.0、最新コードは0.6.1です。内容や操作が異なります。**
 
 ## なぜトップの更新日時が古かったのか
 
 トップで表示する `main` のゲームコードはPrototype 0を保持しています。その後の開発は別ブランチで進めており，mainへはまだ統合していません。最新の試作を見る場合は，上の開発ブランチまたはReleaseを開いてください。このREADMEは入口の案内であり，mainに最新ゲームコードが入ったという意味ではありません。
 
-2026-09-05時点の保存状況：
+2026-09-06の休止時点の保存状況：
 
 | 場所 | 内容 |
 | --- | --- |
 | `main` | Prototype 0のコードと，この案内 |
-| GitHubの開発ブランチ／Release | `0.5.0-challenge`：2銃・効果・3Stage・恒久強化 |
-| Windowsローカルのみ・未Push | `0.5.1-tempo`：残弾速度300以下で再射撃。`0.5.2-clear`：中央にCLEAR／次へ／もう一度 |
+| `feat/portrait-stage` | `0.6.1-drag`までPush済み：4銃・結晶アセット・操作メニュー・B缶・減速調整など |
+| GitHub Releases | 配布済み実行版は`0.5.0-challenge`まで。旧試作も保持 |
+| Windowsローカル | `0.6.1-drag`の検証済みBuild・ZIPを保存。最新版ZIPはRelease未掲載 |
 
-**0.5.1／0.5.2はまだGitHubから取得できません。** コードとBuildはWindowsに保存済みですが，このREADME更新では送信していません。旧試作・Tag・Build・保存記録は残します。
+0.5.1以降のコードも作業ブランチに保存済みです。過去の試作・Tag・Build・保存記録は保持し、mainへのゲームコード統合は行っていません。
 
-## 現在のゲーム：Momentum / Challenge Arsenal
+## 配布済み0.5.0の内容：Momentum / Challenge Arsenal
 
 - 明るいネオン結晶の盤面。中央3:4ステージ，左にDPS・戦闘ログ，右に銃と強化。
 - 一クリックで一マガジン。Revolverは6発，UZIは18発。
@@ -36,7 +40,15 @@ Releaseページの **Assets** から `OneBoardMomentumLab-v0.5.0-challenge-Wind
 
 操作：盤面クリックで発射，`Space`で残弾回収，`R`でPause，`F2`で表示比較。配布中の0.5.0は全弾終了後に再射撃し，クリア後は左のStageボタンで進みます。0.5.1／0.5.2の改善とは区別してください。
 
-次の候補は敵の特色・強化，Stage固有素材，周回難度と追加報酬。まだ仕様確定・実装済みではありません。
+## 休止時点の最新試作：0.6.1-drag
+
+- Revolver・UZI・Shotgun・Sniperの4銃。マガジン発射中も照準を変更可能。
+- 半透明の結晶風アセット、反射・加速・分裂、効果容量20pt、3StageとGold強化。
+- B缶を取得した弾でバンパーに当てると換金。子弾へは引き継がない。
+- マウス照準とクリック発射、`R`／ホイールで銃切替。`Q`／`E`でキーボード照準、`Space`で発射。左上のヘルプ・メニューで操作説明や設定を確認。
+- 狙う意味を取り戻すため、命中時の速度損失と飛行中の減速を強化。Reload完了かつ全弾の速度が300以下になると再射撃可能。
+
+360度の採掘・回収・持ち帰りや、自動生産へ広げる案も話し合いましたが、**未実装の構想メモであり、今後の開発予定ではありません**。[最後の調整とブレインストーミング記録](https://github.com/KOSEIHAMAYA2077/one-board-incremental/blob/feat/portrait-stage/docs/coordination/windows/2026/09/06/1925-stronger-drag-and-extraction-brainstorm.md)に残しています。
 
 ## 開発を再開する場合
 
