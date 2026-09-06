@@ -6,6 +6,10 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        private static extern void MomentumWebQuit();
+#endif
         public bool KeyboardControl { get; private set; }
         public int MenuPage { get; private set; } // 0 play, 1 help, 2 settings, 3 quit
         public bool QuitRequested { get; private set; }
@@ -97,7 +101,11 @@ namespace IncrementalGame.Presentation
         {
             if(MenuPage!=3) return;
             SaveProgress();SaveUtilitySettings();QuitRequested=true;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            MomentumWebQuit();
+#else
             if(!Application.isEditor && !_diagnostic) Application.Quit();
+#endif
         }
         public void SetSeVolume(float volume)
         {

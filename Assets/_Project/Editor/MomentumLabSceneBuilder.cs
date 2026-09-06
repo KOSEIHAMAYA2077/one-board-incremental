@@ -12,6 +12,43 @@ namespace IncrementalGame.Editor
     {
         public const string ScenePath = "Assets/_Project/Scenes/MomentumLab.unity";
 
+        [MenuItem("Incremental Game/Build/Momentum Lab Web")]
+        public static void BuildWeb()
+        {
+            var output = Environment.GetEnvironmentVariable("MOMENTUM_WEB_PATH");
+            if (string.IsNullOrEmpty(output)) throw new InvalidOperationException("MOMENTUM_WEB_PATH is required.");
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.WebGL, BuildTarget.WebGL))
+                throw new InvalidOperationException("Install Web Build Support for Unity 6000.3.18f1.");
+            var oldName = PlayerSettings.productName; var oldCompany = PlayerSettings.companyName;
+            var oldVersion = PlayerSettings.bundleVersion; var oldTemplate = PlayerSettings.WebGL.template;
+            var oldCompression = PlayerSettings.WebGL.compressionFormat;
+            var oldFallback = PlayerSettings.WebGL.decompressionFallback;
+            try
+            {
+                PlayerSettings.productName = "One Board Momentum Lab";
+                PlayerSettings.companyName = "KOSEI HAMAYA";
+                PlayerSettings.bundleVersion = MomentumLabController.GameVersion;
+                PlayerSettings.WebGL.template = "PROJECT:Momentum";
+                PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+                PlayerSettings.WebGL.decompressionFallback = true;
+                Prototype0Build.WriteBuildMetadata();
+                var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+                    scenes = new[] { ScenePath }, target = BuildTarget.WebGL,
+                    locationPathName = output, options = BuildOptions.None
+                });
+                if (report.summary.result != BuildResult.Succeeded)
+                    throw new InvalidOperationException("Momentum Web build failed: " + report.summary.result);
+            }
+            finally
+            {
+                PlayerSettings.productName = oldName; PlayerSettings.companyName = oldCompany;
+                PlayerSettings.bundleVersion = oldVersion; PlayerSettings.WebGL.template = oldTemplate;
+                PlayerSettings.WebGL.compressionFormat = oldCompression;
+                PlayerSettings.WebGL.decompressionFallback = oldFallback;
+                AssetDatabase.SaveAssets();
+            }
+        }
+
         [MenuItem("Incremental Game/Generate Momentum Lab Scene")]
         public static void Generate()
         {

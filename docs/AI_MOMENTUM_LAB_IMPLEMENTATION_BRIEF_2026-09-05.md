@@ -84,3 +84,6 @@ User承認のMaster §32.1に従い、ネオン発光と3D結晶Meshを追加す
 ## 完了条件
 
 通常／貫通の減速差，速度倍率と上限，停止弾の最後のダメージ，時間減衰，ゾーン一回と相対移動衝突，壁反射，再訪Hit，Seed再現性，重なり回避，三発SnapshotとReload，編集PauseのTest．旧Testも維持．Windows BuildとStandalone診断を行い，Userへ操作を渡す．
+# 配布補足：Web試遊版（2026-09-06）
+
+User承認により、休止中の0.6.1-dragをGitHub Pagesで試遊可能にする。ゲーム仕様・数値の変更ではなく、Web用日本語Font、ブラウザ保存、終了案内、ビルドと配布の対応に限定する。Windowsの既存Build／Saveは保持。範囲と制約は`docs/WEB_DEMO.md`を参照。

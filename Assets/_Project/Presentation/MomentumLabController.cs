@@ -198,7 +198,11 @@ namespace IncrementalGame.Presentation
         private void EnsureStyles()
         {
             if (_body != null) return;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            _font = Resources.Load<Font>("WebFonts/NotoSansCJKjp-Regular");
+#else
             _font = Font.CreateDynamicFontFromOSFont(new[] { "Yu Gothic UI", "Meiryo", "Arial" }, 16);
+#endif
             _body = new GUIStyle { font = _font, fontSize = 16, wordWrap = true, normal = { textColor = new Color(.85f, .9f, .94f) } };
             _small = new GUIStyle(_body) { fontSize = 13, normal = { textColor = new Color(.64f, .75f, .82f) } };
             _title = new GUIStyle(_body) { fontSize = 21, fontStyle = FontStyle.Bold };
@@ -255,9 +259,13 @@ namespace IncrementalGame.Presentation
         }
         private void Log(string message)
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return; // Browser demo saves progress, not unbounded session log files.
+#else
             if (!PersistenceEnabled || _logPath == null) return;
             try { Directory.CreateDirectory(Path.GetDirectoryName(_logPath)); File.AppendAllText(_logPath, DateTime.UtcNow.ToString("O") + " " + message + Environment.NewLine); }
             catch (IOException) { } catch (UnauthorizedAccessException) { }
+#endif
         }
         private void OnApplicationFocus(bool focus) { _focus = focus || _diagnostic; _blockedFrame = Time.frameCount + 1; }
         private void OnApplicationQuit() { SaveUtilitySettings(); SaveProgress(); Log($"end gold={Simulation.Gold} magazines={Simulation.MagazineCount} fired={Simulation.FiredCount}"); }
