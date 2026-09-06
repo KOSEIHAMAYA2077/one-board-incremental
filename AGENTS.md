@@ -18,6 +18,8 @@ Prototype 0では`docs/AI_PROTOTYPE0_IMPLEMENTATION_BRIEF_2026-08-28.md`だけ�
 
 ## 実装規則
 
+最新試作は0.6.1-drag。Master §33.11／Momentum Brief参照。Challengeの命中減速を2倍，高速時間減速を180/sにする比較Patch。初速・分裂・低速880/s・旧Labは保持。360度採掘／持ち帰り／拠点自動生産案はHandoffのみの未採用メモであり，今回は実装しない。
+
 最新試作は0.6.0-arsenal。Master §33.10／Momentum Briefを参照。Shotgun／Sniper，子弾非継承のB缶，R・ホイール銃切替，Q/E照準・Space発射，Help／設定／終了確認。新Saveから旧Saveへ書き戻さない。一時ゾーン案は未実装。以下は旧版の復元用記録。
 
 最新試作は0.5.5-steer。Master §33.9／Momentum Briefを参照。Revolver0.4秒・UZI0.12秒間隔と射出中照準のみを更新。ワープやバンパーGoldの案は未実装のメモであり，先回りして追加しない。旧版の記述とBuildを保持する。

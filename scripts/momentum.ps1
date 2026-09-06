@@ -41,11 +41,11 @@ if ($Command -in @('test','verify')) {
 if ($Command -in @('build','verify')) {
     $env:MOMENTUM_BUILD_PATH = Join-Path $MomentumRun 'Windows\OneBoardMomentumLab.exe'
     Invoke-MomentumUnity 'build' @('-quit','-buildTarget','StandaloneWindows64','-executeMethod','IncrementalGame.Editor.MomentumLabSceneBuilder.BuildWindows')
-    $zip = Join-Path $MomentumRun 'OneBoardMomentumLab-v0.6.0-arsenal-Windows-x64.zip'
+    $zip = Join-Path $MomentumRun 'OneBoardMomentumLab-v0.6.1-drag-Windows-x64.zip'
     Compress-Archive -Path (Join-Path $MomentumRun 'Windows\*') -DestinationPath $zip
     $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([IO.Path]::GetFileName($zip))" | Set-Content -LiteralPath ($zip+'.sha256') -Encoding ascii
     $commit = git -C $MomentumProject rev-parse HEAD
-    @("Version: 0.6.0-arsenal", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $MomentumRun 'summary.txt') -Encoding utf8
+    @("Version: 0.6.1-drag", "Commit: $commit", 'Unity: 6000.3.18f1', "Command: $Command", "SHA256: $hash") | Set-Content -LiteralPath (Join-Path $MomentumRun 'summary.txt') -Encoding utf8
 }
 Write-Output "Artifacts: $MomentumRun"

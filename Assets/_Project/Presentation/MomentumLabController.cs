@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.6.0-arsenal";
+        public const string GameVersion = "0.6.1-drag";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;

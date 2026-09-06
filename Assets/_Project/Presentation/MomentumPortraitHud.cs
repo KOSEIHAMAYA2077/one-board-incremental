@@ -47,7 +47,7 @@ namespace IncrementalGame.Presentation
             var sim = Simulation; var p = sim.Progress;
             Panel(new Rect(24,32,450,836),new Color(.045f,.075f,.105f));
             Label(44,48,310,36,"MOMENTUM LAB",_title);
-            Label(44,91,410,25,"銃 × 効果 × 一斉射の連鎖",_small);
+            Label(44,91,410,25,"減速比較：命中時 ×2 / 時間減速 180/s",_small);
             Panel(new Rect(44,128,410,114),new Color(.075f,.14f,.18f));
             Label(60,140,370,25,"実効 DPS / 直近5秒",_small);
             Label(60,170,370,58,$"{sim.Stats.RecentDps:0.0}",_gold);

@@ -47,13 +47,14 @@ namespace IncrementalGame.Core
     {
         public const double LaunchSpeed = 900, MaximumSpeed = 1800, Drag = 120, StopSpeed = 80, Radius = 8;
         public const double TailSpeed = 300, TailDrag = 880;
+        public const double ChallengeDrag = 180, ChallengeImpactLoss = 2;
         public static double TimeSpeed(double speed, double seconds, bool quickTail)
         {
             if (!quickTail) return Math.Max(0, speed - Drag * seconds);
             // Split a tick at the threshold, so crossing it never applies the
             // stronger brake to the preceding high-speed portion.
-            var fastTime = Math.Min(seconds, Math.Max(0, speed - TailSpeed) / Drag);
-            var result = Math.Max(0, speed - Drag * fastTime - TailDrag * (seconds - fastTime));
+            var fastTime = Math.Min(seconds, Math.Max(0, speed - TailSpeed) / ChallengeDrag);
+            var result = Math.Max(0, speed - ChallengeDrag * fastTime - TailDrag * (seconds - fastTime));
             return result <= StopSpeed + 1e-9 ? Math.Min(result, StopSpeed) : result;
         }
         public const double Left = 320, Right = 1560, Top = 120, Bottom = 760, ZoneRadius = 65;
@@ -278,7 +279,8 @@ namespace IncrementalGame.Core
                     ApplyDamage(hit.Target, ball, damage);
                     ball.Exiting.Add(hit.Target.Id);
                     ball.HitTargets.Add(hit.Target.Id);
-                    SetSpeed(ball, MomentumRules.ExitSpeed(ball.Ammo, ball.Speed, hit.Target.Resistance * ball.ResistanceScale));
+                    var resistance=hit.Target.Resistance*ball.ResistanceScale*(Progress!=null?MomentumRules.ChallengeImpactLoss:1);
+                    SetSpeed(ball, MomentumRules.ExitSpeed(ball.Ammo, ball.Speed, resistance));
                     TriggerEffects(ball, hit.Target, damage);
                 }
                 else if (hit.Priority == 4)

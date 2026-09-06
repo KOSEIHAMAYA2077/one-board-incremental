@@ -73,11 +73,12 @@ namespace IncrementalGame.Tests.EditMode
             Assert.That(b.Alive,Is.False); Assert.That(sim.Balls,Is.Empty);
             Assert.That(b.Position.X-800,Is.InRange(30,50),"The old low-speed tail travelled about 348 logical pixels");
         }
-        [Test] public void BrakePreservesFastFlightAndSplitsThresholdTimeExactly()
+        [Test] public void StrongerChallengeDragSplitsThresholdTimeAndPreservesLegacy()
         {
-            Assert.That(MomentumRules.TimeSpeed(900,1.0/60,true),Is.EqualTo(898).Within(1e-8));
-            Assert.That(MomentumRules.TimeSpeed(306,.05,true),Is.EqualTo(300).Within(1e-8));
-            Assert.That(MomentumRules.TimeSpeed(301,1.0/60,true),Is.EqualTo(300-880.0/120).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(900,1.0/60,true),Is.EqualTo(897).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(309,.05,true),Is.EqualTo(300).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(301,1.0/60,true),Is.EqualTo(300-880.0/90).Within(1e-8));
+            Assert.That(MomentumRules.TimeSpeed(900,1.0/60,false),Is.EqualTo(898).Within(1e-8));
             Assert.That(MomentumRules.TimeSpeed(300,.05,false),Is.EqualTo(294),"Legacy lab keeps its decay");
             var once=MomentumRules.TimeSpeed(301,.05,true);
             var split=301.0; for(var i=0;i<3;i++) split=MomentumRules.TimeSpeed(split,1.0/60,true);
