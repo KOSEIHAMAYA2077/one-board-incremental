@@ -142,7 +142,9 @@ namespace IncrementalGame.Presentation
             else if(MenuPage==2)
             {
                 Label(424,195,746,28,$"SE音量  {SeVolume*100:0}%",_body);
-                SetSeVolume(GUI.HorizontalSlider(new Rect(424,237,730,22),SeVolume,0,1));
+                if(Button(new Rect(424,235,235,38),"− 10%")) SetSeVolume(SeVolume-.1f);
+                if(Button(new Rect(671,235,235,38),SeVolume>0?"消音":"音量 100%")) SetSeVolume(SeVolume>0?0:1);
+                if(Button(new Rect(918,235,235,38),"＋ 10%")) SetSeVolume(SeVolume+.1f);
                 Label(424,284,746,30,"BGM：未実装（音楽は再生されません）",_body);
                 Label(424,346,746,30,"表示テーマ",_title);
                 var names=new[]{"CRYSTAL","NEON","DIAGRAM"};

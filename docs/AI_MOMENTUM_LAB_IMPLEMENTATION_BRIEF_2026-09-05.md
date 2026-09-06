@@ -6,6 +6,8 @@ Master v0.8.0 §33.10。Shotgun8粒同時／Sniper太い高速1発を初期使�
 
 受入条件：同時8粒・1マガジン消費，Sniperの上限／高速Swept Hit，射出中切替の非遡及性，Bの取得／1回換金／壁／回収／子継承なし／子の独立取得，100Seed配置，銃Preset JSON，Mouse・Keyboard・Pauseの境界，Menu裏誤操作防止，SEと表示状態の非干渉，既存全Test，Windows BuildとFHD通常画面・Help・設定・終了確認の描画確認。今段階では外部Asset，BGM作曲，多種缶，Skill Treeや周回経済を追加しない。
 
+Windows描画確認で，試験PCのD3D12では設定画面の描画欠けを観測，同一SourceのD3D11起動では正常。今回のMomentum Windows PlayerだけD3D11を指定し，Build後にProjectの元のAPI設定を復元する。SEは10%刻みの増減・消音Button。画像確認は文字Overflowだけで合否を決めず，Modal全体の描画を目視する。
+
 ## 最新Patch：0.5.5-steer
 
 Master v0.7.5 §33.9。Revolver6発は0.4秒間隔，UZI18発は0.12秒間隔。一クリックで撃ち切り，射出中に盤面内の有効な照準を更新して未射出弾へ反映する。発射済み弾を曲げない。UI／盤面外／銃の近傍では最後の有効方向を保持。Pause・Focus・クリック防止の入力境界を維持。弾速・減速・弾数・親子寿命・Save・旧Labは変更しない。検証は両銃の時刻／弾数／Reload，照準変更の非遡及性，無効入力，Pause，入力列再現性，Controller接続，既存TestとWindows描画。収益ギミックはHandoffにある未採用案のみ。
