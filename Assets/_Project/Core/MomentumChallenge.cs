@@ -14,12 +14,18 @@ namespace IncrementalGame.Core
         public int RemainingTargets => Targets.FindAll(t => t.Alive).Count;
         public bool CanConfigure => Progress != null && !Bursting && Balls.Count == 0;
         public const double RefireSpeed = 300;
-        public static double ShotInterval(int gun) => gun == 0 ? .4 : .12;
+        public static double ShotInterval(int gun) => gun == 0 ? .4 : gun == 1 ? .12 : 0;
+        public static int ShotCount(int gun) => gun == 0 ? 6 : gun == 1 ? 18 : gun == 2 ? 8 : 1;
+        public static double GunSpeed(int gun) => gun == 0 ? 780 : gun == 1 ? 1050 : gun == 2 ? 760 : 1650;
+        public static double GunDamage(int gun) => gun == 0 ? 48 : gun == 1 ? 17 : gun == 2 ? 18 : 90;
+        public static double GunRadius(int gun) => gun == 0 ? 9 : gun == 1 ? 5 : gun == 2 ? 6 : 14;
+        public static string GunName(int gun) => gun == 0 ? "REVOLVER" : gun == 1 ? "UZI" : gun == 2 ? "SHOTGUN" : "SNIPER";
+        public int FiringGun => _volleyGun;
         public double FastestBallSpeed
         {
             get { var speed = 0.0; foreach (var ball in Balls) if (ball.Alive) speed = Math.Max(speed, ball.Speed); return speed; }
         }
-        public bool HasRoomForMagazine => Progress != null && Balls.Count + (Progress.gun == 0 ? 6 : 18) <= 256;
+        public bool HasRoomForMagazine => Progress != null && Balls.Count + ShotCount(Progress.gun) <= 256;
         private bool CanStartMagazine => ChallengeState == MomentumChallengeState.Active
             && ChallengeMagazines < ChallengeLimit && RemainingTargets > 0
             && FastestBallSpeed <= RefireSpeed && HasRoomForMagazine;
@@ -47,6 +53,7 @@ namespace IncrementalGame.Core
                 t.RewardBonus = stage * 2;
             }
             RefillTargets();
+            ResetPickups();
             // A complete encounter is required; never grant a cheap mastery for failed placement.
             if (Targets.Exists(t => !t.Alive)) throw new InvalidOperationException("Challenge placement incomplete");
             return true;
@@ -57,7 +64,7 @@ namespace IncrementalGame.Core
             _volleyPower = 1 + Progress.powerLevel * .1;
             _volleyExpires = Time + 10;
             _spawnedByMagazine[MagazineCount + 1] = 0;
-            _firing = new MomentumAmmo[_volleyGun == 0 ? 6 : 18];
+            _firing = new MomentumAmmo[ShotCount(_volleyGun)];
             ChallengeMagazines++;
         }
         private void ConfigureBall(MomentumBall ball, int number)
@@ -65,13 +72,13 @@ namespace IncrementalGame.Core
             ball.Mods = _volleyMods;
             ball.ExpiresAt = _volleyExpires;
             _spawnedByMagazine[ball.MagazineId] = SpawnedInMagazine(ball.MagazineId) + 1;
-            ball.Radius = _volleyGun == 0 ? 9 : 5;
-            ball.DamageScale = (_volleyGun == 0 ? 48.0 : 17.0) / 40 * _volleyPower;
+            ball.Radius = GunRadius(_volleyGun);
+            ball.DamageScale = GunDamage(_volleyGun) / 40 * _volleyPower;
             if ((ball.Mods & MomentumMod.Power) != 0) ball.DamageScale *= 1.25;
             if ((ball.Mods & MomentumMod.Overcharge) != 0) ball.DamageScale *= 1.2;
             ball.ResistanceScale = (ball.Mods & MomentumMod.Pierce) != 0 ? .25 : 1;
             ball.Golden = (ball.Mods & MomentumMod.Golden) != 0 && number % 4 == 0;
-            var speed = (_volleyGun == 0 ? 780 : 1050) * ((ball.Mods & MomentumMod.Speed) != 0 ? 1.2 : 1);
+            var speed = Math.Min(MomentumRules.MaximumSpeed, GunSpeed(_volleyGun) * ((ball.Mods & MomentumMod.Speed) != 0 ? 1.2 : 1));
             ball.Velocity = ball.Velocity.Normalized * speed;
         }
         public bool Recall()

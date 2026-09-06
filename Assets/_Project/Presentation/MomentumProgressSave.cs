@@ -10,16 +10,18 @@ namespace IncrementalGame.Presentation
         private string _savedProgress;
         private bool _saveBlocked;
         public string ProgressWarning { get; private set; }
-        public string ProgressPath => Path.Combine(Application.persistentDataPath, "challenge-v1.json");
+        public string ProgressPath => Path.Combine(Application.persistentDataPath, "challenge-arsenal-v1.json");
         private MomentumProgress LoadProgress()
         {
-            if (!PersistenceEnabled || !File.Exists(ProgressPath)) return new MomentumProgress();
+            if (!PersistenceEnabled) return new MomentumProgress();
+            var source=File.Exists(ProgressPath)?ProgressPath:Path.Combine(Application.persistentDataPath,"challenge-v1.json");
+            if(!File.Exists(source)) return new MomentumProgress();
             try
             {
-                var text = File.ReadAllText(ProgressPath);
+                var text = File.ReadAllText(source);
                 var progress = JsonUtility.FromJson<MomentumProgress>(text);
                 if (progress == null || !progress.Valid()) throw new InvalidDataException("Unsupported or invalid progress");
-                _savedProgress = JsonUtility.ToJson(progress, true); return progress;
+                _savedProgress = source==ProgressPath?JsonUtility.ToJson(progress, true):null; return progress;
             }
             catch (Exception e)
             {
@@ -34,7 +36,7 @@ namespace IncrementalGame.Presentation
             if (json == _savedProgress) return;
             try
             {
-                var history = Path.Combine(Application.persistentDataPath, "challenge-history"); Directory.CreateDirectory(history);
+                var history = Path.Combine(Application.persistentDataPath, "challenge-arsenal-history"); Directory.CreateDirectory(history);
                 var stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff") + "-" + Guid.NewGuid().ToString("N");
                 var temp = Path.Combine(history, stamp + "-pending.json");
                 File.WriteAllText(temp, json);

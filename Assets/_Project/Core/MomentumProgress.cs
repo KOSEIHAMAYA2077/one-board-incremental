@@ -3,7 +3,7 @@ using System;
 namespace IncrementalGame.Core
 {
     [Flags] public enum MomentumMod { None = 0, Power = 1, Speed = 2, Pierce = 4, Split = 8, Golden = 16, Blast = 32, Overcharge = 64 }
-    public enum MomentumGun { Revolver, Uzi }
+    public enum MomentumGun { Revolver, Uzi, Shotgun, Sniper }
     public enum MomentumChallengeState { Active, Cleared, Failed }
 
     // Only persistent ownership/configuration. No in-flight state or Unity dependency.
@@ -31,7 +31,8 @@ namespace IncrementalGame.Core
             for (var i = 0; i < 3; i++) if (!ValidBuild(presetGuns[i], presetMods[i])) return false;
             return true;
         }
-        private bool ValidBuild(int weapon, int mask) => weapon >= 0 && weapon <= 1 && (weapon == 0 || uziUnlocked) &&
+        public bool OwnsGun(int weapon) => weapon >= 0 && weapon <= 3 && (weapon != 1 || uziUnlocked);
+        private bool ValidBuild(int weapon, int mask) => OwnsGun(weapon) &&
             mask >= 0 && (mask & ~unlockedMods) == 0 && Used(mask) <= Capacity;
         public bool Toggle(MomentumMod mod)
         {

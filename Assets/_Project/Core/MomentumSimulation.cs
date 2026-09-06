@@ -28,7 +28,7 @@ namespace IncrementalGame.Core
         public double Radius = MomentumRules.Radius, DamageScale = 1, ResistanceScale = 1;
         public double ExpiresAt = double.PositiveInfinity;
         public MomentumMod Mods;
-        public bool Golden, HasSplit, HasBlasted;
+        public bool Golden, HasSplit, HasBlasted, BountyCharged;
         public int Generation;
         public readonly HashSet<int> HitTargets = new HashSet<int>();
         public readonly HashSet<int> Exiting = new HashSet<int>();
@@ -148,12 +148,19 @@ namespace IncrementalGame.Core
             _firing = (MomentumAmmo[])_magazine.Clone();
             if (Progress != null) PrepareVolley();
             _nextSlot = 0; _nextShotTime = Time; MagazineCount++;
-            FireNext(); return true;
+            FireEmission(); return true;
+        }
+        private void FireEmission()
+        {
+            FireNext();
+            if (Progress != null && _volleyGun == 2) while (_firing != null) FireNext();
         }
         private void FireNext()
         {
+            var spread = Progress != null && _volleyGun == 3 ? .4 : 2;
+            var fan = Progress != null && _volleyGun == 2 ? -24 + _nextSlot * (48.0 / 7) : 0;
             var ball = new MomentumBall { Id = ++_nextBallId, MagazineId = MagazineCount, Ammo = _firing[_nextSlot++],
-                Position = Layout.Gun, Velocity = AimCalculator.RotateDegrees(_aim, _shotRandom.NextSignedOffset(2)) * MomentumRules.LaunchSpeed };
+                Position = Layout.Gun, Velocity = AimCalculator.RotateDegrees(_aim, fan + _shotRandom.NextSignedOffset(spread)) * MomentumRules.LaunchSpeed };
             if (Progress != null) ConfigureBall(ball, _nextSlot);
             Balls.Add(ball);
             FiredCount++;
@@ -167,7 +174,7 @@ namespace IncrementalGame.Core
             if (Editing) return;
             Time += seconds;
             Stats.Advance(Time);
-            if (Bursting && Time + 1e-9 >= _nextShotTime) FireNext();
+            if (Bursting && Time + 1e-9 >= _nextShotTime) FireEmission();
             var existing = Balls.Count;
             for (var i = 0; i < existing; i++) if (Balls[i].Alive) Step(Balls[i], seconds);
             Balls.AddRange(_children); _children.Clear();
@@ -233,6 +240,9 @@ namespace IncrementalGame.Core
                 if (MomentumRules.SweepCircle(delta, ball.Velocity, MomentumObstacle.Radius + ball.Radius, remaining, out var t))
                     Consider(ref best, t, 1, obstacle.Id, (delta + ball.Velocity * t).Normalized);
             }
+            if (!ball.BountyCharged) foreach (var pickup in Pickups)
+                if (pickup.Active && MomentumRules.SweepCircle(ball.Position-pickup.Position,ball.Velocity,MomentumPickup.Radius+ball.Radius,remaining,out var pickupTime))
+                    Consider(ref best,pickupTime,4,pickup.Id,default);
             var v = ball.Velocity; var p = ball.Position;
             Wall(ref best, v.X < 0 ? (Layout.Left + ball.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 1, new SimVector2(1, 0));
             Wall(ref best, v.X > 0 ? (Layout.Right - ball.Radius - p.X) / v.X : double.PositiveInfinity, remaining, 2, new SimVector2(-1, 0));
@@ -271,6 +281,11 @@ namespace IncrementalGame.Core
                     SetSpeed(ball, MomentumRules.ExitSpeed(ball.Ammo, ball.Speed, hit.Target.Resistance * ball.ResistanceScale));
                     TriggerEffects(ball, hit.Target, damage);
                 }
+                else if (hit.Priority == 4)
+                {
+                    var pickup=Pickups.Find(p=>p.Id==hit.Id);
+                    if(pickup!=null && pickup.Active) { pickup.Active=false;ball.BountyCharged=true;Events.Add(new MomentumEvent("pickup",ball.Position,0)); }
+                }
                 else if (hit.Priority == 3)
                 {
                     ball.Boosted = true; BoostCount++;
@@ -279,6 +294,7 @@ namespace IncrementalGame.Core
                 }
                 else
                 {
+                    if(hit.Priority==1 && ball.BountyCharged) RedeemBounty(ball);
                     ball.Velocity = SimVector2.Reflect(ball.Velocity, hit.Normal);
                     SetSpeed(ball, ball.Speed * .9); ball.Position += hit.Normal * .2;
                 }

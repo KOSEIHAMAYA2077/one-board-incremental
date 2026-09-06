@@ -9,7 +9,7 @@ namespace IncrementalGame.Presentation
 {
     public sealed partial class MomentumLabController : MonoBehaviour
     {
-        public const string GameVersion = "0.5.5-steer";
+        public const string GameVersion = "0.6.0-arsenal";
         public bool NeonEnabled { get; private set; } = true;
         public MomentumNeonView NeonView { get; private set; }
         private Renderer[] _legacyRenderers;
@@ -50,6 +50,7 @@ namespace IncrementalGame.Presentation
             _logPath = Path.Combine(Application.persistentDataPath, "sessions", _session + ".log");
             Log($"start version={GameVersion} commit={BuildMetadata.CommitHash} seed={Simulation.Seed}");
             SyncViews();
+            LoadUtilitySettings();
         }
         private void BuildBoard()
         {
@@ -101,14 +102,14 @@ namespace IncrementalGame.Presentation
         }
         public bool TryFire(SimVector2 aim)
         {
-            if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.Layout.Contains(aim) || !Simulation.TryFire(aim)) return false;
+            if (!_focus || MenuPage!=0 || Time.frameCount <= _blockedFrame || !Simulation.Layout.Contains(aim) || !Simulation.TryFire(aim)) return false;
             Log($"magazine id={Simulation.MagazineCount} aim={aim} slots={string.Join(",", Simulation.Magazine)}");
             DrawAim(Simulation.BurstAim);
             SyncViews(); return true;
         }
         public bool SteerBurst(SimVector2 aim)
         {
-            if (!_focus || Time.frameCount <= _blockedFrame || !Simulation.UpdateBurstAim(aim)) return false;
+            if (!_focus || MenuPage!=0 || Time.frameCount <= _blockedFrame || !Simulation.UpdateBurstAim(aim)) return false;
             DrawAim(Simulation.BurstAim);
             return true;
         }
@@ -129,19 +130,7 @@ namespace IncrementalGame.Presentation
         }
         private void Update()
         {
-            if (!_focus || _diagnostic) return;
-            if (Input.GetKeyDown(KeyCode.F2)) SetNeonEnabled(!NeonEnabled);
-            if (Input.GetKeyDown(KeyCode.F3)) NeonView.SetCrystalKitEnabled(!NeonView.CrystalKitEnabled);
-            if (Input.GetKeyDown(KeyCode.Space)) RecallVolley();
-            if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Escape)) SetEditing(!Simulation.Editing);
-            var over = MouseAim(out var aim);
-            if (!Simulation.Editing && over && Input.GetMouseButtonDown(0)) TryFire(aim);
-            if (over) SteerBurst(aim);
-            _aimLine.enabled = over && !Simulation.Editing && !ClearPanelVisible;
-            if (_aimLine.enabled)
-            {
-                DrawAim(Simulation.Bursting ? Simulation.BurstAim : (aim - Simulation.Layout.Gun).Normalized);
-            }
+            UpdateControls();
         }
         private void FixedUpdate() { if (_focus && !_stressDiagnostic) StepSimulation(1.0 / 60); }
         public void StepSimulation(double seconds)
@@ -151,7 +140,8 @@ namespace IncrementalGame.Presentation
             foreach (var e in Simulation.Events)
             {
                 _popups.Add(new Popup { Position = e.Position, Kind = e.Kind, Amount = e.Amount });
-                if (e.Kind == "hit") _audio?.PlayHit();
+                if (e.Kind == "hit" || e.Kind == "pickup") _audio?.PlayHit();
+                if (e.Kind == "bounty") _audio?.PlayReady();
                 if (e.Kind == "destroy") { _lastGold = (int)e.Amount; _message = $"撃破 +{_lastGold} Gold。壊れた的は次の斉射で別の位置へ。"; }
                 if (e.Kind == "boost") _message = $"加速！ 速度 {e.Amount:0}。この弾は奥まで届きやすくなります。";
                 Log($"{e.Kind} target={e.Target} amount={e.Amount:0.00}");
@@ -270,7 +260,7 @@ namespace IncrementalGame.Presentation
             catch (IOException) { } catch (UnauthorizedAccessException) { }
         }
         private void OnApplicationFocus(bool focus) { _focus = focus || _diagnostic; _blockedFrame = Time.frameCount + 1; }
-        private void OnApplicationQuit() { SaveProgress(); Log($"end gold={Simulation.Gold} magazines={Simulation.MagazineCount} fired={Simulation.FiredCount}"); }
+        private void OnApplicationQuit() { SaveUtilitySettings(); SaveProgress(); Log($"end gold={Simulation.Gold} magazines={Simulation.MagazineCount} fired={Simulation.FiredCount}"); }
         private IEnumerator Start()
         {
             if (!_diagnostic) yield break;
@@ -281,6 +271,8 @@ namespace IncrementalGame.Presentation
             yield return new WaitForSecondsRealtime(1); yield return new WaitForEndOfFrame();
             var playingOverflow = string.Join("\n", _overflows);
             _focus = true; _blockedFrame = -1;
+            if(Array.IndexOf(args,"-momentum-arsenal")>=0)
+            { yield return CaptureArsenal(folder);yield break; }
             if (Array.IndexOf(args, "-momentum-clear") >= 0)
             {
                 // Isolated presentation fixture: capture success screens without touching saves.

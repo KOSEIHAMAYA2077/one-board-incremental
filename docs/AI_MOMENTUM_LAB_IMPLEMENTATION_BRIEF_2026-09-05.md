@@ -1,5 +1,11 @@
 # MOMENTUM LAB：速度を使い切る三発マガジン
 
+## 最新Patch：0.6.0-arsenal
+
+Master v0.8.0 §33.10。Shotgun8粒同時／Sniper太い高速1発を初期使用可能にし，R・ホイールで次マガジンの銃を切替。Q/E照準・Space発射とMouse自動切替。B缶は取得弾だけに条件付きバンパー換金12Gを付け，子弾へ継承しない。缶破壊で一時ゾーンを作る案は未実装。? Help，設定Menu，Esc終了確認，SE音量，3表示Theme，BGM未実装表示。旧Saveを読むだけの新保存先を用い，全旧版を保持する。新数値・状態・操作・保存仕様は§33.10を参照。
+
+受入条件：同時8粒・1マガジン消費，Sniperの上限／高速Swept Hit，射出中切替の非遡及性，Bの取得／1回換金／壁／回収／子継承なし／子の独立取得，100Seed配置，銃Preset JSON，Mouse・Keyboard・Pauseの境界，Menu裏誤操作防止，SEと表示状態の非干渉，既存全Test，Windows BuildとFHD通常画面・Help・設定・終了確認の描画確認。今段階では外部Asset，BGM作曲，多種缶，Skill Treeや周回経済を追加しない。
+
 ## 最新Patch：0.5.5-steer
 
 Master v0.7.5 §33.9。Revolver6発は0.4秒間隔，UZI18発は0.12秒間隔。一クリックで撃ち切り，射出中に盤面内の有効な照準を更新して未射出弾へ反映する。発射済み弾を曲げない。UI／盤面外／銃の近傍では最後の有効方向を保持。Pause・Focus・クリック防止の入力境界を維持。弾速・減速・弾数・親子寿命・Save・旧Labは変更しない。検証は両銃の時刻／弾数／Reload，照準変更の非遡及性，無効入力，Pause，入力列再現性，Controller接続，既存TestとWindows描画。収益ギミックはHandoffにある未採用案のみ。

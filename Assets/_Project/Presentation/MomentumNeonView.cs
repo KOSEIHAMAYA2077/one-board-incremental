@@ -128,6 +128,7 @@ namespace IncrementalGame.Presentation
 
         public void Sync(MomentumSimulation sim)
         {
+            SyncPickupViews(sim);
             SyncCrystalKit(sim);
             foreach(var t in sim.Targets)
             {
@@ -147,7 +148,7 @@ namespace IncrementalGame.Presentation
             foreach(var b in sim.Balls)
             {
                 alive.Add(b.Id);
-                var c=b.Golden?new Color(1,1,.12f):b.Ammo==MomentumAmmo.Normal?new Color(1,.69f,.13f):new Color(.18f,.73f,1);
+                var c=b.BountyCharged?new Color(.65f,1,.18f):b.Golden?new Color(1,1,.12f):b.Ammo==MomentumAmmo.Normal?new Color(1,.69f,.13f):new Color(.18f,.73f,1);
                 if(!_flights.TryGetValue(b.Id,out var f))
                 {
                     var root=Node("Neon projectile "+b.Id,transform);
