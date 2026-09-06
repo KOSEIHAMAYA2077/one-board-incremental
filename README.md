@@ -5,13 +5,23 @@
 > AI駆動でゲームを作ってみることを目的に、射撃・反射・分裂・強化などを試作しました。遊んで面白い部分もありましたが、当初作りたかった遊びとの違いを感じ、この形での開発はいったん区切ることにしました。
 > 完成品ではなく、試作コード・アセット・提案や判断の変遷を残すための公開リポジトリです。過去の試作も消さずに保存しています。再開や製品化は未定です。
 
+## ダウンロードしてすぐ遊ぶ（Windows）
+
+### [▶ Windows体験版 0.6.1 をダウンロード（ZIP・約35 MB）](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/download/v0.6.1-drag/OneBoardMomentumLab-v0.6.1-drag-Windows-x64.zip)
+
+**ZIPを「すべて展開」→ `OneBoardMomentumLab.exe` をダブルクリック → 盤面を狙って左クリック。** Unityのインストールやビルドは不要です。Windows 10／11・64bit向け。DataフォルダーやDLLも一緒に展開してください。
+
+`R`／ホイールで銃を切替。発射中も狙いを動かせます。左上の`?`で遊び方、`≡`で音量・表示設定、`Esc`で終了確認。[詳しい起動方法と操作](docs/MOMENTUM_DRAG_RELEASE_2026-09-06.md)／[ReleaseとSHA-256](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-drag)。未署名の試作なのでWindowsに警告される場合があります。保護機能は無効にせず、配布元を確認してください。
+
+ブラウザ版は未公開です。このZIPはMacやスマートフォンでは動きません。
+
 ## 休止時点の最新試作：MOMENTUM LAB / 0.6.1-drag
 
 中央3:4の結晶風盤面で、一マガジンの射撃・反射・加速・分裂を試すUnityプロトタイプです。Revolver・UZI・Shotgun・Sniperの4銃、容量20ptの付け替え効果、3StageとGold強化、B缶を取得した弾でバンパーに当てる換金を実装しています。子弾はB缶の効果を継承しません。
 
 マウス照準とクリックで一マガジンを発射。発射中も照準を変更できます。`R`／ホイールで銃切替、`Q`／`E`でキーボード照準、`Space`で発射。左上のヘルプ・メニューに操作説明や設定があります。Reload完了かつ全弾の速度が300以下になると再射撃可能。0.6.1では狙う意味を取り戻すため、命中時と飛行中の減速を強化しました。
 
-**このブランチには0.6.1までのコードを保存済みですが、[配布済みWindows実行版](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases)は0.5.0までです。** 最新版のBuild・ZIPはWindowsローカルに保存しており、Releaseには未掲載です。mainは初期Prototype 0と案内を保持しています。
+**このブランチの0.6.1-dragは、上のリンクからWindows実行版も取得できます。** mainは初期Prototype 0と案内を保持しています。旧配布版もRelease一覧に残しています。
 
 Scene：`Assets/_Project/Scenes/MomentumLab.unity`。Unity **6000.3.18f1**で `.\scripts\momentum.ps1 verify` を実行すると検証・Windows Build・ZIP・SHA-256を生成します。成果物は `Artifacts/Momentum/<日時>/`。現行試作の仕様はMaster §33（最新調整は§33.11）とMomentum Briefを参照してください。
 
