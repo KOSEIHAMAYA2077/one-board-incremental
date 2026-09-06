@@ -1,10 +1,21 @@
 # One Board Incremental
 
-## 最新試作：MOMENTUM LAB / 速度資源型マガジン
+> **試作してみた結果、思い描いていたものと違ったため、いったん開発を止めています。（2026年9月6日）**
+>
+> AI駆動でゲームを作ってみることを目的に、射撃・反射・分裂・強化などを試作しました。遊んで面白い部分もありましたが、当初作りたかった遊びとの違いを感じ、この形での開発はいったん区切ることにしました。
+> 完成品ではなく、試作コード・アセット・提案や判断の変遷を残すための公開リポジトリです。過去の試作も消さずに保存しています。再開や製品化は未定です。
 
-一クリックで三発を撃ち切り，速度が残る限り的を貫く試作．`R`で通常／貫通の三Slotを編集する．通常は高威力，貫通は抵抗による減速が1/4．装甲は弾種制限ではなく速度抵抗．水色の移動ゾーンは弾速×2，壁と障害物で反射．破壊した的だけ次の斉射で別位置へ補充する．旧Recipe・自由配置版はそのまま残す．
+## 休止時点の最新試作：MOMENTUM LAB / 0.6.1-drag
 
-Scene：`Assets/_Project/Scenes/MomentumLab.unity`．`.\scripts\momentum.ps1 verify`で検証・Windows Build．成果物は`Artifacts/Momentum/<日時>/Windows/OneBoardMomentumLab.exe`．Master §32とMomentum Briefが現行試作の正本．将来案と判断理由は`docs/ideas/2026-09-05-speed-resource-direction.md`．
+中央3:4の結晶風盤面で、一マガジンの射撃・反射・加速・分裂を試すUnityプロトタイプです。Revolver・UZI・Shotgun・Sniperの4銃、容量20ptの付け替え効果、3StageとGold強化、B缶を取得した弾でバンパーに当てる換金を実装しています。子弾はB缶の効果を継承しません。
+
+マウス照準とクリックで一マガジンを発射。発射中も照準を変更できます。`R`／ホイールで銃切替、`Q`／`E`でキーボード照準、`Space`で発射。左上のヘルプ・メニューに操作説明や設定があります。Reload完了かつ全弾の速度が300以下になると再射撃可能。0.6.1では狙う意味を取り戻すため、命中時と飛行中の減速を強化しました。
+
+**このブランチには0.6.1までのコードを保存済みですが、[配布済みWindows実行版](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases)は0.5.0までです。** 最新版のBuild・ZIPはWindowsローカルに保存しており、Releaseには未掲載です。mainは初期Prototype 0と案内を保持しています。
+
+Scene：`Assets/_Project/Scenes/MomentumLab.unity`。Unity **6000.3.18f1**で `.\scripts\momentum.ps1 verify` を実行すると検証・Windows Build・ZIP・SHA-256を生成します。成果物は `Artifacts/Momentum/<日時>/`。現行試作の仕様はMaster §33（最新調整は§33.11）とMomentum Briefを参照してください。
+
+360度の採掘・回収・持ち帰りや自動生産への展開は、**未実装の構想メモであり、今後の開発予定ではありません**。[最後の調整とブレインストーミング記録](docs/coordination/windows/2026/09/06/1925-stronger-drag-and-extraction-brainstorm.md)と[試作保存記録](docs/RELEASE_ARCHIVE.md)も残しています。以下は過去の試作説明です。
 
 ## 保存版：RECIPE LAB / Prototype 2
 
