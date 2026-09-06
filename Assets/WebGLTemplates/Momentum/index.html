@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Momentum Lab — 遊べる試作</title>
+  <link rel="icon" href="data:,">
   <meta name="description" content="射撃・反射・結晶の連鎖を試せるUnityプロトタイプ。開発は一時休止中。">
   <style>
     *{box-sizing:border-box}body{margin:0;background:#080f15;color:#dce9f1;font:16px system-ui,sans-serif}header,footer{padding:10px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}header{border-bottom:1px solid #254153}header strong{margin-right:auto}a{color:#68d8f7}button{font:inherit;color:#dce9f1;background:#16374b;border:1px solid #4d819c;padding:8px 18px;border-radius:4px;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #ffc96c}main{position:relative;width:min(100vw,calc((100dvh - 132px)*16/9));margin:auto;aspect-ratio:16/9}canvas{display:block;width:100%;height:100%;background:#101e28}#cover{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;flex-direction:column;gap:16px;background:#102330;text-align:center;padding:24px}#cover[hidden]{display:none}#status{max-width:650px;line-height:1.7}footer{justify-content:center;font-size:14px;color:#afc5d2}#mobile{display:none}@media(max-width:800px){#mobile{display:block}main{width:100vw}header,footer{font-size:14px}}
@@ -12,7 +13,7 @@
 <body>
   <header><strong>MOMENTUM LAB / 試作保存版</strong><button id="fullscreen" type="button">全画面</button><a href="https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-drag">Windows版をDL</a><a href="https://github.com/KOSEIHAMAYA2077/one-board-incremental">制作記録</a></header>
   <main id="player"><canvas id="game" width="1920" height="1080" tabindex="0" aria-label="Momentum Lab ゲーム画面"></canvas><section id="cover"><strong>結晶を狙って、一マガジン。</strong><div id="status" role="status">PC・マウス／キーボード向け。音が出ます。<br>試作して思い描いた方向と違ったため、開発はいったん休止しています。</div><button id="start" type="button">遊ぶ</button><div id="mobile">スマートフォン向けの操作には対応していません。PCで開いてください。</div></section></main>
-  <footer>左クリック：発射　R／ホイール：銃切替　Q・E：照準　Space：発射　?：説明<br>進行はこのブラウザに保存。プライベートモードやサイトデータ削除では失われる場合があります。</footer>
+  <footer>左クリック：発射　R／ホイール：銃切替　Q・E：照準　Space：発射　?：説明<br>進行はこのブラウザに保存。プライベートモードやサイトデータ削除では失われる場合があります。<a href="OFL.txt">Font license</a></footer>
   <script src="Build/{{{ LOADER_FILENAME }}}"></script>
   <script>
     const canvas=document.querySelector('#game'),cover=document.querySelector('#cover'),start=document.querySelector('#start'),status=document.querySelector('#status');let game;
