@@ -6,7 +6,7 @@ Master v0.8.0 §33.10。Shotgun8粒同時／Sniper太い高速1発を初期使�
 
 受入条件：同時8粒・1マガジン消費，Sniperの上限／高速Swept Hit，射出中切替の非遡及性，Bの取得／1回換金／壁／回収／子継承なし／子の独立取得，100Seed配置，銃Preset JSON，Mouse・Keyboard・Pauseの境界，Menu裏誤操作防止，SEと表示状態の非干渉，既存全Test，Windows BuildとFHD通常画面・Help・設定・終了確認の描画確認。今段階では外部Asset，BGM作曲，多種缶，Skill Treeや周回経済を追加しない。
 
-Windows描画確認で，試験PCの描画Job使用時に設定画面の欠けを観測（D3D12とD3D11双方）。今回のMomentum Windows PlayerだけD3D11・Graphics Jobs無効を指定し，Build後にProjectの元のAPI／Jobs設定を復元する。SEは10%刻みの増減・消音Button。診断は文字Overflowに加え，Modal四隅の実画素を確認し，全面の描画も目視する。詳細なEngine／Driver内の原因は未確定。
+SEは10%刻みの増減・消音Button。診断は文字Overflowに加え，Modal四隅の実画素を確認し，全面の描画も目視する。画像Previewで疑った設定画面の欠落は，保存画像のModal領域の画素比較では再現しなかった。試験的なGraphics API／Jobs変更は撤回し，従来のProject設定を継続する。詳細はHandoffに記録する。
 
 ## 最新Patch：0.5.5-steer
 
