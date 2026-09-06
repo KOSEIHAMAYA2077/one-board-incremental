@@ -5,14 +5,22 @@
 > AI駆動でゲームを作ってみることを目的に、射撃・反射・分裂・強化などを試作しました。遊んで面白い部分もありましたが、当初作りたかった遊びとの違いを感じ、この形での開発はいったん区切ることにしました。
 > 完成品ではなく、試作コード・アセット・提案や判断の変遷を残すための公開リポジトリです。過去の試作も消さずに保存しています。再開や製品化は未定です。
 
-## まず遊ぶ・開発を見る
+## ダウンロードしてすぐ遊ぶ（Windows）
 
-- **[Windows実行版：Challenge Arsenal 0.5.0](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.5.0-challenge)**
+### [▶ Windows体験版 0.6.1 をダウンロード（ZIP・約35 MB）](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/download/v0.6.1-drag/OneBoardMomentumLab-v0.6.1-drag-Windows-x64.zip)
+
+**ZIPを「すべて展開」→ `OneBoardMomentumLab.exe` をダブルクリック → 盤面を狙って左クリック。** Unityのインストールやビルドは不要です。Windows 10／11・64bit向け。DataフォルダーやDLLも一緒に展開してください。
+
+`R`／ホイールで銃を切替。発射中も狙いを動かせます。左上の`?`で遊び方、`≡`で音量・表示設定、`Esc`で終了確認。[詳しい操作と検証](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-drag)。未署名の試作なのでWindowsに警告される場合があります。保護機能は無効にせず、配布元を確認してください。
+
+## 開発記録・過去版を見る
+
+- [旧Windows実行版：Challenge Arsenal 0.5.0](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.5.0-challenge)
 - **[休止時点の最新コード：0.6.1-drag / feat/portrait-stage](https://github.com/KOSEIHAMAYA2077/one-board-incremental/tree/feat/portrait-stage)**
 - [過去の試作も含むダウンロード一覧](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases)
 - [試作の保存記録](https://github.com/KOSEIHAMAYA2077/one-board-incremental/blob/feat/portrait-stage/docs/RELEASE_ARCHIVE.md)
 
-Releaseページの **Assets** から `OneBoardMomentumLab-v0.5.0-challenge-Windows-x64.zip` をダウンロードし，全体を展開して `OneBoardMomentumLab.exe` を起動してください。DataフォルダーとDLLは一緒に置きます。`Source code (zip)` は実行版ではありません。**配布済み実行版は0.5.0、最新コードは0.6.1です。内容や操作が異なります。**
+Releaseページの `Source code (zip)` は開発用ソースであり、実行版ではありません。遊ぶ場合は上のWindows体験版を選んでください。
 
 ## なぜトップの更新日時が古かったのか
 
@@ -24,8 +32,8 @@ Releaseページの **Assets** から `OneBoardMomentumLab-v0.5.0-challenge-Wind
 | --- | --- |
 | `main` | Prototype 0のコードと，この案内 |
 | `feat/portrait-stage` | `0.6.1-drag`までPush済み：4銃・結晶アセット・操作メニュー・B缶・減速調整など |
-| GitHub Releases | 配布済み実行版は`0.5.0-challenge`まで。旧試作も保持 |
-| Windowsローカル | `0.6.1-drag`の検証済みBuild・ZIPを保存。最新版ZIPはRelease未掲載 |
+| GitHub Releases | `0.6.1-drag`のWindows実行版を公開。旧試作も保持 |
+| Windowsローカル | 検証済みBuild・ZIP・検証ログを保持 |
 
 0.5.1以降のコードも作業ブランチに保存済みです。過去の試作・Tag・Build・保存記録は保持し、mainへのゲームコード統合は行っていません。
 
