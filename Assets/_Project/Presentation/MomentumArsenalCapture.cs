@@ -30,7 +30,19 @@ namespace IncrementalGame.Presentation
                 OpenMenu(page);var time=Simulation.Time;StepSimulation(1.0/60);ok &= time==Simulation.Time;
                 yield return null;yield return null;
                 yield return new WaitForEndOfFrame();
-                ScreenCapture.CaptureScreenshot(Path.Combine(folder,$"menu-{page}.png"));
+                var texture=ScreenCapture.CaptureScreenshotAsTexture();
+                try
+                {
+                    var panelVisible=true;
+                    foreach(var point in new[]{new Vector2Int(480,140),new Vector2Int(1440,140),new Vector2Int(480,940),new Vector2Int(1440,940)})
+                    {
+                        var pixel=texture.GetPixel(point.x,texture.height-point.y);
+                        panelVisible &= pixel.b>.06f && pixel.b>pixel.r*1.5f;
+                    }
+                    ok &= panelVisible;report.AppendLine($"menu={page}; panelPixelsVisible={panelVisible}");
+                    File.WriteAllBytes(Path.Combine(folder,$"menu-{page}.png"),texture.EncodeToPNG());
+                }
+                finally { Destroy(texture); }
                 report.AppendLine($"menu={page}; paused={time==Simulation.Time}; overflow="+string.Join(" | ",_overflows));ok &= _overflows.Count==0;
                 yield return new WaitForSecondsRealtime(.1f);CloseMenu();
             }

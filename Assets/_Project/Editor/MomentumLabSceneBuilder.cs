@@ -41,6 +41,7 @@ namespace IncrementalGame.Editor
             var oldMode = PlayerSettings.fullScreenMode; var oldResizable = PlayerSettings.resizableWindow;
             var oldAutoApi=PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64);
             var oldApis=PlayerSettings.GetGraphicsAPIs(BuildTarget.StandaloneWindows64);
+            var oldGraphicsJobs=PlayerSettings.graphicsJobs;
             try
             {
                 PlayerSettings.productName = "One Board Momentum Lab";
@@ -48,10 +49,11 @@ namespace IncrementalGame.Editor
                 PlayerSettings.bundleVersion = MomentumLabController.GameVersion;
                 PlayerSettings.defaultScreenWidth = 1920; PlayerSettings.defaultScreenHeight = 1080;
                 PlayerSettings.fullScreenMode = FullScreenMode.Windowed; PlayerSettings.resizableWindow = true;
-                // Native D3D12 capture loses IMGUI batches on the test machine.
-                // Scope the verified D3D11 backend to this player, then restore the project.
+                // Jobified rendering intermittently loses IMGUI batches on the test PC.
+                // Scope D3D11 without graphics jobs to this player, then restore the project.
                 PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64,false);
                 PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,new[]{UnityEngine.Rendering.GraphicsDeviceType.Direct3D11});
+                PlayerSettings.graphicsJobs=false;
                 Prototype0Build.WriteBuildMetadata();
                 Directory.CreateDirectory(Path.GetDirectoryName(output));
                 var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
@@ -70,6 +72,7 @@ namespace IncrementalGame.Editor
                 PlayerSettings.fullScreenMode = oldMode; PlayerSettings.resizableWindow = oldResizable;
                 PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,oldApis);
                 PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64,oldAutoApi);
+                PlayerSettings.graphicsJobs=oldGraphicsJobs;
                 AssetDatabase.SaveAssets();
             }
         }
