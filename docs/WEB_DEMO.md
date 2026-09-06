@@ -1,5 +1,9 @@
 # ブラウザ試遊版
 
+**[ブラウザで遊ぶ](https://koseihamaya2077.github.io/one-board-incremental/)** / [Web保存版Release](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-web)
+
+PCで「遊ぶ」をクリック。初回通信は約21 MB。Windows版とは別のブラウザ保存です。既存の個人サイトのリポジトリ・設定・コンテンツは変更していません。
+
 ゲームの開発休止は継続したまま、0.6.1-dragの手触りをインストール不要で試せるようWebへ移植する。新しいゲーム要素やBalanceは追加しない。
 
 ## 配布方式
@@ -20,7 +24,16 @@
 - ゲーム画面の開始クリックで読み込み。音声はブラウザのユーザー操作制限に従う。
 - PCのマウス／キーボード向け。スマートフォン対応・Mac Safari検証を完了したと扱わない。
 
-## 参考
+## 保存元と検証
+
+- Web Build source：`6c4eabb6c027a251777e4f78cc27891e38e9abf1`。ゲーム内Versionは0.6.1-dragのまま。Web版Tagは`v0.6.1-web`で区別。
+- ZIP SHA-256：`ab38767612667bf2c69300cd4b17af3c7c79e2d9b6d85078bc73cfc56a70fe68`。
+- 既存EditMode 102/102・PlayMode 35/35、Unity Web Build成功。Edgeで日本語、射撃、Gold増加、銃切替、Help、終了案内、再読込後のGold・銃復元を確認。
+- 起動時にWebGLの機能照会Warningあり。検証では描画・操作の停止なし。再読込時、Unityキャッシュが使われた通信の中断はページ例外と区別して記録。
+- 未検証：Mac Safari、スマートフォン、長時間プレイ、利用者全環境での保存・音声・描画保証。
+- GitHub Pages配布はmainの`.github/workflows/pages-demo.yml`から手動実行。固定ReleaseのZIPとSHA-256を取得・照合してDeployする。ゲームのソースBranchをmainへ統合しない。
+
+## 参考資料
 
 - [Unity Webの配布設定](https://docs.unity3d.com/6000.3/Documentation/Manual/webgl-deploying.html)
 - [GitHub Pagesのプロジェクトサイト](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)

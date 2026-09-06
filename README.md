@@ -5,6 +5,12 @@
 > AI駆動でゲームを作ってみることを目的に、射撃・反射・分裂・強化などを試作しました。遊んで面白い部分もありましたが、当初作りたかった遊びとの違いを感じ、この形での開発はいったん区切ることにしました。
 > 完成品ではなく、試作コード・アセット・提案や判断の変遷を残すための公開リポジトリです。過去の試作も消さずに保存しています。再開や製品化は未定です。
 
+## インストールせずに遊ぶ
+
+### [▶ ブラウザで試作を遊ぶ](https://koseihamaya2077.github.io/one-board-incremental/)
+
+**PCで開いて「遊ぶ」をクリックするだけ。** マウスで狙い、左クリックで発射。音が出ます。初回は約21 MBを読み込みます。進行はこのブラウザに保存され、Windows版とは別です。スマートフォン向け操作は未対応。重い場合は下のWindows版をどうぞ。[Web版の保存・技術情報](docs/WEB_DEMO.md)
+
 ## ダウンロードしてすぐ遊ぶ（Windows）
 
 ### [▶ Windows体験版 0.6.1 をダウンロード（ZIP・約35 MB）](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/download/v0.6.1-drag/OneBoardMomentumLab-v0.6.1-drag-Windows-x64.zip)
@@ -13,7 +19,7 @@
 
 `R`／ホイールで銃を切替。発射中も狙いを動かせます。左上の`?`で遊び方、`≡`で音量・表示設定、`Esc`で終了確認。[詳しい起動方法と操作](docs/MOMENTUM_DRAG_RELEASE_2026-09-06.md)／[ReleaseとSHA-256](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-drag)。未署名の試作なのでWindowsに警告される場合があります。保護機能は無効にせず、配布元を確認してください。
 
-ブラウザ版は未公開です。このZIPはMacやスマートフォンでは動きません。
+このWindows用ZIPはMacやスマートフォンでは動きません。ブラウザ試遊には上のリンクを使ってください。
 
 ## 休止時点の最新試作：MOMENTUM LAB / 0.6.1-drag
 

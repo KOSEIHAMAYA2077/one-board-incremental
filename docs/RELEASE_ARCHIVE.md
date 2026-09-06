@@ -2,6 +2,8 @@
 
 ## 2026-09-06追記：休止時点の体験版
 
+ブラウザ版も[GitHub Pages](https://koseihamaya2077.github.io/one-board-incremental/)で試遊可能。[v0.6.1-web](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-web)はWeb配置用ZIPの保存版。Source `6c4eabb6c027a251777e4f78cc27891e38e9abf1`、SHA-256 `ab38767612667bf2c69300cd4b17af3c7c79e2d9b6d85078bc73cfc56a70fe68`。[Web制約と検証](WEB_DEMO.md)。Windows用ZIPとは異なる。
+
 リポジトリは公開済み。**[0.6.1-drag Windows版](https://github.com/KOSEIHAMAYA2077/one-board-incremental/releases/tag/v0.6.1-drag)**を追加保存。ZIPを展開してexeを起動するだけで試遊可能。Build source `56bfa5d4d3805113bef6e89719a7067bf17da375`、SHA-256 `7236cb91f26cfa8d3df4ba6b48e9e389bc927caaf7768292f006651ecb6b72cb`。[起動・操作・検証](MOMENTUM_DRAG_RELEASE_2026-09-06.md)。旧版はすべて保持。以下は公開前を含む当時の保存記録。
 
 2026-09-05時点。すべて開発中のPrereleaseであり、正式製品版ではない。リポジトリは非公開のまま。
